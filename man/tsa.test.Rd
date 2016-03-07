@@ -65,7 +65,7 @@ tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names
 tsa.results
 summary(tsa.results)
 
-Evaluate Results
+#Evaluate Results
 boxplot(tsa.results)
 plot(tsa.results)
 pcoa.tsa(tsa.results)

@@ -39,7 +39,7 @@ taxa.data<-add.met(Test=bio.data.test$Raw.Data[201,],Reference=bio.data.test$Raw
 #TSA test of indicator metrics at test site and reference sites selected used site.match()
 tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T)
 
-Evaluate Results
+#Evaluate Results
 pcoa.tsa(tsa.results)
 }
 \keyword{Analysis,}

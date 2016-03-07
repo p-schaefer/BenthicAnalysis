@@ -30,7 +30,7 @@
 #' #TSA test of indicator metrics at test site and reference sites selected used site.match()
 #' tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T)
 #'
-#' Evaluate Results
+#' #Evaluate Results
 #' plot(tsa.results)
 
 
@@ -92,7 +92,7 @@ plot.tsa.object<-function(tsa.object){
 #' #TSA test of indicator metrics at test site and reference sites selected used site.match()
 #' tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T)
 #'
-#' Evaluate Results
+#' #Evaluate Results
 #' boxplot(tsa.results)
 
 boxplot.tsa.object <- function(tsa.object) {
@@ -175,7 +175,7 @@ boxplot.tsa.object <- function(tsa.object) {
 #' #TSA test of indicator metrics at test site and reference sites selected used site.match()
 #' tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T)
 #'
-#' Evaluate Results
+#' #Evaluate Results
 #' pcoa.tsa(tsa.results)
 
 pcoa.tsa<-function(tsa.object,vectors=T,supplemental=NULL){
@@ -237,7 +237,7 @@ pcoa.tsa<-function(tsa.object,vectors=T,supplemental=NULL){
 #' #Match a test site (#201) to the nearest neighbour reference set
 #' nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
 #'
-#' Evaluate Results
+#' #Evaluate Results
 #' sitematch.plot(nn.sites)
 
 sitematch.plot<-function(match.object,axis=c(1,2)) {
@@ -315,7 +315,7 @@ sitematch.plot<-function(match.object,axis=c(1,2)) {
 #' #Match a test site (#201) to the nearest neighbour reference set
 #' nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
 #' 
-#' Evaluate Results
+#' #Evaluate Results
 #' plot(nn.sites)
 
 plot.match.object<-function(match.object){

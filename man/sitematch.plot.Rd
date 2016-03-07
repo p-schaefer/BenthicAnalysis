@@ -31,7 +31,7 @@ rownames(YKEnvData)<-bio.data.test$Site.List
 #Match a test site (#201) to the nearest neighbour reference set
 nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
 
-Evaluate Results
+#Evaluate Results
 sitematch.plot(nn.sites)
 }
 \keyword{ANNA,}

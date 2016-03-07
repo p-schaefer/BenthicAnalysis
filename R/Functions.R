@@ -49,7 +49,7 @@
 #' tsa.results
 #' summary(tsa.results)
 #'
-#' Evaluate Results
+#' #Evaluate Results
 #' boxplot(tsa.results)
 #' plot(tsa.results)
 #' pcoa.tsa(tsa.results)
