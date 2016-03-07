@@ -1121,7 +1121,7 @@ shinyServer(function(input, output, session) {
               if (input$ab.tsabox.plot){
                 if (input$metdata==T){
                   jpeg(filename=paste0(sel.dir(),"/TSA Boxplot/",i,"-tsabox.jpeg"),width=640,height=480)
-                  boxplot(tsa.results)
+                  boxplottsa(tsa.results)
                   dev.off()
                 } 
                 if (input$metdata==F){
@@ -1206,7 +1206,7 @@ shinyServer(function(input, output, session) {
                 textplot(txt,halign="left", valign="top")
 
                 if (input$metdata==T){
-                  boxplot(tsa.results)
+                  boxplottsa(tsa.results)
                 } else {
                   tsa.stand<-tsa.zscore(Test=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[(1+length(nn.sites$final.dist)),],
                                         Reference=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[1:length(nn.sites$final.dist),])

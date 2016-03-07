@@ -30,16 +30,16 @@
 #' data(YKBioData,envir = environment()) #Environmental dataset
 #'
 #' #Calculate indicator metrics from raw biological data
-#' bio.data.test<-benth.met(bio.data.yk1,2,2)
+#' bio.data.test<-benth.met(YKBioData,2,2)
 #'
 #' #Extract just the summary metrics
 #' bio.data<-bio.data.test$Summary.Metrics
 #'
 #' #standardize row names between datasets
-#' rownames(env.data.yk)<-bio.data.test$Site.List
+#' rownames(YKEnvData)<-bio.data.test$Site.List
 #'
 #' #Match a test site (#201) to the nearest neighbour reference set
-#' nn.sites<-site.match(env.data.yk[201,-c(1)],env.data.yk[1:118,-c(1)],k=F,adaptive=T)
+#' nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
 #'
 #' #Calculate additional metrics based on selected Reference sites
 #' taxa.data<-add.met(Test=bio.data.test$Raw.Data[201,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
@@ -47,6 +47,7 @@
 #' #TSA test of indicator metrics at test site and reference sites selected used site.match()
 #' tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T)
 #' tsa.results
+#' summary(tsa.results)
 #'
 #' Evaluate Results
 #' boxplot(tsa.results)

@@ -46,16 +46,18 @@ data(YKEnvData,envir = environment()) #Biological dataset
 data(YKBioData,envir = environment()) #Environmental dataset
 
 #Calculate indicator metrics from raw biological data
-bio.data.test<-benth.met(bio.data.yk1,2,2)
+bio.data.test<-benth.met(YKBioData,2,2)
 
 #Extract just the summary metrics
 bio.data<-bio.data.test$Summary.Metrics
 
 #standardize row names between datasets
-rownames(env.data.yk)<-bio.data.test$Site.List
+rownames(YKEnvData)<-bio.data.test$Site.List
 
 #Match a test site (#201) to the nearest neighbour reference set
-nn.sites<-site.match(env.data.yk[201,-c(1)],env.data.yk[1:118,-c(1)],k=F,adaptive=T)
+nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
+nn.sites
+summary(nn.sites)
 
 #Evaluate nearest neighbour selections
 plot(nn.sites)

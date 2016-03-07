@@ -13,28 +13,29 @@
 #' data(YKBioData,envir = environment()) #Environmental dataset
 #'
 #' #Calculate indicator metrics from raw biological data
-#' bio.data.test<-benth.met(bio.data.yk1,2,2)
+#' bio.data.test<-benth.met(YKBioData,2,2)
 #'
 #' #Extract just the summary metrics
 #' bio.data<-bio.data.test$Summary.Metrics
 #'
 #' #standardize row names between datasets
-#' rownames(env.data.yk)<-bio.data.test$Site.List
+#' rownames(YKEnvData)<-bio.data.test$Site.List
 #'
 #' #Match a test site (#201) to the nearest neighbour reference set
-#' nn.sites<-site.match(env.data.yk[201,-c(1)],env.data.yk[1:118,-c(1)],k=F,adaptive=T)
+#' nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
 #'
-#' #Extract the raw taxa data for additional metric calculation
-#' taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data[201,]),])
+#' #Calculate additional metrics based on selected Reference sites
+#' taxa.data<-add.met(Test=bio.data.test$Raw.Data[201,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
 #'
 #' #TSA test of indicator metrics at test site and reference sites selected used site.match()
-#' tsa.results<-tsa.test(bio.data[201,],bio.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T, add.metric=taxa.data)
+#' tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T)
 #'
 #' Evaluate Results
 #' plot(tsa.results)
 
 
 plot.tsa.object<-function(tsa.object){
+  old.par <- par( no.readonly = TRUE )
   par(mar=c(5.1,4.1,4.1,2.1))
   tsa.dist<-tsa.object$mahalanobis.distance
   nInd<-as.numeric(tsa.object$general.results["Number of Metrics",])
@@ -56,6 +57,8 @@ plot.tsa.object<-function(tsa.object){
   }
 
   text(tsa.dist[length(tsa.dist)],0, labels="test-site",pos=3, offset=0.5,cex=1,col='black')
+  par( old.par )
+  
 }
 ######################################################################################################
 
@@ -72,22 +75,22 @@ plot.tsa.object<-function(tsa.object){
 #' data(YKBioData,envir = environment()) #Environmental dataset
 #'
 #' #Calculate indicator metrics from raw biological data
-#' bio.data.test<-benth.met(bio.data.yk1,2,2)
+#' bio.data.test<-benth.met(YKBioData,2,2)
 #'
 #' #Extract just the summary metrics
 #' bio.data<-bio.data.test$Summary.Metrics
 #'
 #' #standardize row names between datasets
-#' rownames(env.data.yk)<-bio.data.test$Site.List
+#' rownames(YKEnvData)<-bio.data.test$Site.List
 #'
 #' #Match a test site (#201) to the nearest neighbour reference set
-#' nn.sites<-site.match(env.data.yk[201,-c(1)],env.data.yk[1:118,-c(1)],k=F,adaptive=T)
+#' nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
 #'
-#' #Extract the raw taxa data for additional metric calculation
-#' taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data[201,]),])
+#' #Calculate additional metrics based on selected Reference sites
+#' taxa.data<-add.met(Test=bio.data.test$Raw.Data[201,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
 #'
 #' #TSA test of indicator metrics at test site and reference sites selected used site.match()
-#' tsa.results<-tsa.test(bio.data[201,],bio.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T, add.metric=taxa.data)
+#' tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T)
 #'
 #' Evaluate Results
 #' boxplot(tsa.results)
@@ -106,6 +109,8 @@ boxplot.tsa.object <- function(tsa.object) {
   b1<-ceiling(length(text)/3)
   b2<-ceiling(length(text)*2/3)
   
+  old.par <- par( no.readonly = TRUE )
+  
   l<-rbind(c(1,1,1),c(1,1,1),c(2,3,4))
   layout(l)
 
@@ -122,19 +127,19 @@ boxplot.tsa.object <- function(tsa.object) {
     points(which(colnames(tsa.stand)%in%rownames(part.tsa)[part.tsa$p<0.05]),rep((min(tsa.stand)*1.2),length(rownames(part.tsa)[part.tsa$p<0.05])),col="red",pch="*",cex=2)
   }
   #screen(3)
-  par(mar = c(0,0,0,0))
+  par(mar = c(0.1,0.1,0.1,0.1))
   plot(1, type="n", axes=F, xlab="", ylab="")
-  legend("center",text[1:b1],cex=1.25,fill=cols[1:b1],bty="n",x.intersp=1,y.intersp=1)
+  legend("center",text[1:b1],cex=0.9,fill=cols[1:b1],bty="n",x.intersp=0.9,y.intersp=0.9)
   #screen(4)
-  par(mar = c(0,0,0,0))
+  par(mar = c(0.1,0.1,0.1,0.1))
   plot(1, type="n", axes=F, xlab="", ylab="")
-  legend("center",text[(b1+1):b2],cex=1.25,fill=cols[(b1+1):b2],bty="n",x.intersp=1,y.intersp=1)
+  legend("center",text[(b1+1):b2],cex=0.9,fill=cols[(b1+1):b2],bty="n",x.intersp=0.9,y.intersp=0.9)
   #screen(5)
-  par(mar = c(0,0,0,0))
+  par(mar = c(0.1,0.1,0.1,0.1))
   plot(1, type="n", axes=F, xlab="", ylab="")
-  legend("center",text[(b2+1):length(text)],cex=1.25,fill=cols[(b2+1):length(text)],bty="n",x.intersp=1,y.intersp=1)
-
-  #close.screen(all=T)
+  legend("center",text[(b2+1):length(text)],cex=0.9,fill=cols[(b2+1):length(text)],bty="n",x.intersp=0.9,y.intersp=0.9)
+  
+  par( old.par )
 }
 
 ###############################################################################
@@ -153,27 +158,29 @@ boxplot.tsa.object <- function(tsa.object) {
 #' data(YKBioData,envir = environment()) #Environmental dataset
 #'
 #' #Calculate indicator metrics from raw biological data
-#' bio.data.test<-benth.met(bio.data.yk1,2,2)
+#' bio.data.test<-benth.met(YKBioData,2,2)
 #'
 #' #Extract just the summary metrics
 #' bio.data<-bio.data.test$Summary.Metrics
 #'
 #' #standardize row names between datasets
-#' rownames(env.data.yk)<-bio.data.test$Site.List
+#' rownames(YKEnvData)<-bio.data.test$Site.List
 #'
 #' #Match a test site (#201) to the nearest neighbour reference set
-#' nn.sites<-site.match(env.data.yk[201,-c(1)],env.data.yk[1:118,-c(1)],k=F,adaptive=T)
+#' nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
 #'
-#' #Extract the raw taxa data for additional metric calculation
-#' taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data[201,]),])
+#' #Calculate additional metrics based on selected Reference sites
+#' taxa.data<-add.met(Test=bio.data.test$Raw.Data[201,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
 #'
 #' #TSA test of indicator metrics at test site and reference sites selected used site.match()
-#' tsa.results<-tsa.test(bio.data[201,],bio.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T, add.metric=taxa.data)
+#' tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T)
 #'
 #' Evaluate Results
 #' pcoa.tsa(tsa.results)
 
 pcoa.tsa<-function(tsa.object,vectors=T,supplemental=NULL){
+  old.par <- par( no.readonly = TRUE )
+  
   par(mar=c(5.1,4.1,4.1,2.1))
   supp<-data.frame(supplemental)
   mets<-tsa.object$raw.data
@@ -200,6 +207,8 @@ pcoa.tsa<-function(tsa.object,vectors=T,supplemental=NULL){
   if (!is.null(supplemental)) {
     plot(envfit(plot1,supp[,colSums(supp)>0],display="sites",na.rm=F,permutations=0),cex=0.8,col="red")
   }
+  par( old.par )
+  
 }
 
 #################################################################################################
@@ -217,27 +226,23 @@ pcoa.tsa<-function(tsa.object,vectors=T,supplemental=NULL){
 #' data(YKBioData,envir = environment()) #Environmental dataset
 #'
 #' #Calculate indicator metrics from raw biological data
-#' bio.data.test<-benth.met(bio.data.yk1,2,2)
+#' bio.data.test<-benth.met(YKBioData,2,2)
 #'
 #' #Extract just the summary metrics
 #' bio.data<-bio.data.test$Summary.Metrics
 #'
 #' #standardize row names between datasets
-#' rownames(env.data.yk)<-bio.data.test$Site.List
+#' rownames(YKEnvData)<-bio.data.test$Site.List
 #'
 #' #Match a test site (#201) to the nearest neighbour reference set
-#' nn.sites<-site.match(env.data.yk[201,-c(1)],env.data.yk[1:118,-c(1)],k=F,adaptive=T)
-#'
-#' #Extract the raw taxa data for additional metric calculation
-#' taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data[201,]),])
-#'
-#' #TSA test of indicator metrics at test site and reference sites selected used site.match()
-#' tsa.results<-tsa.test(bio.data[201,],bio.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T, add.metric=taxa.data)
+#' nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
 #'
 #' Evaluate Results
 #' sitematch.plot(nn.sites)
 
 sitematch.plot<-function(match.object,axis=c(1,2)) {
+  old.par <- par( no.readonly = TRUE )
+  
   par(mar=c(5.1,4.1,4.1,2.1))
   final.dist<-match.object$final.dist
   anna.dist<-match.object$all.dist
@@ -280,6 +285,8 @@ sitematch.plot<-function(match.object,axis=c(1,2)) {
     text(x=anna.test.x[,axis[1]],y=anna.test.x[,axis[2]],labels=rownames(anna.test.x),pos=2,offset=0.5,
          cex=0.8,col="red")
   }
+  par( old.par )
+  
 }
 
 
@@ -297,27 +304,23 @@ sitematch.plot<-function(match.object,axis=c(1,2)) {
 #' data(YKBioData,envir = environment()) #Environmental dataset
 #'
 #' #Calculate indicator metrics from raw biological data
-#' bio.data.test<-benth.met(bio.data.yk1,2,2)
+#' bio.data.test<-benth.met(YKBioData,2,2)
 #'
 #' #Extract just the summary metrics
 #' bio.data<-bio.data.test$Summary.Metrics
 #'
 #' #standardize row names between datasets
-#' rownames(env.data.yk)<-bio.data.test$Site.List
+#' rownames(YKEnvData)<-bio.data.test$Site.List
 #'
 #' #Match a test site (#201) to the nearest neighbour reference set
-#' nn.sites<-site.match(env.data.yk[201,-c(1)],env.data.yk[1:118,-c(1)],k=F,adaptive=T)
-#'
-#' #Extract the raw taxa data for additional metric calculation
-#' taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data[201,]),])
-#'
-#' #TSA test of indicator metrics at test site and reference sites selected used site.match()
-#' tsa.results<-tsa.test(bio.data[201,],bio.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T, add.metric=taxa.data)
-#'
+#' nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
+#' 
 #' Evaluate Results
 #' plot(nn.sites)
 
 plot.match.object<-function(match.object){
+  old.par <- par( no.readonly = TRUE )
+  
   par(mar=c(5.1,4.1,4.1,2.1))
   anna.dist<-match.object$all.dist
   final.dist<-match.object$final.dist
@@ -331,4 +334,55 @@ plot.match.object<-function(match.object){
   } else {
     abline(v=k,lty=2,col="grey40")
   }
+  par( old.par )
+  
 }
+
+#' @export
+boxplottsa <- function(tsa.object) {
+  old.par <- par( no.readonly = TRUE )
+  
+  tsa.stand<-tsa.object$z.scores
+  nInd<-ncol(tsa.stand)
+  nRef<-nrow(tsa.stand)-1
+  
+  part.tsa<-if (!is.null(tsa.object$partial.tsa)) {tsa.object$partial.tsa} else {NULL}
+  all.met<-colnames(tsa.stand)
+  sel.met<-unlist(strsplit(substr(tsa.object$general.results["Selected Indicator Metrics",],1,(nchar(tsa.object$general.results["Selected Indicator Metrics",])-2)),split=", "))
+  
+  cols<-colorRampPalette(brewer.pal(12, "Paired"))(nInd)
+  text<-paste(seq(1:ncol(tsa.stand)),colnames(tsa.stand),sep=".")
+  b1<-ceiling(length(text)/3)
+  b2<-ceiling(length(text)*2/3)
+  
+  l<-rbind(c(1,1,1),c(1,1,1),c(2,3,4))
+  layout(l)
+  
+  #suppressWarnings(split.screen(c(2,1)))
+  #split.screen(c(1, 3), screen = 2)
+  #screen(1)
+  par(mar = c(1.9,0.8,1.2,0.8))
+  boxplot(tsa.stand[1:nRef,],col=cols,outline=F,yaxt="n",ylim=c(min(tsa.stand)*1.3,max(tsa.stand)*1.1),names=seq(1:nInd),cex.axis=1.2,main="")
+  title(main=paste0(rownames(tsa.stand)[(nRef+1)]," Boxplot"),cex=1.5)
+  points(seq(1:nInd),tsa.stand[(nRef+1),],col="red",pch=19,cex=1)
+  
+  points(which(colnames(tsa.stand)%in%sel.met),tsa.stand[nrow(tsa.stand),sel.met],col="black",pch="O",cex=1.75)#This line circles points that are used in analysis
+  if (any(part.tsa$p<0.05)) {
+    points(which(colnames(tsa.stand)%in%rownames(part.tsa)[part.tsa$p<0.05]),rep((min(tsa.stand)*1.2),length(rownames(part.tsa)[part.tsa$p<0.05])),col="red",pch="*",cex=2)
+  }
+  #screen(3)
+  par(mar = c(0,0,0,0))
+  plot(1, type="n", axes=F, xlab="", ylab="")
+  legend("center",text[1:b1],cex=1.25,fill=cols[1:b1],bty="n",x.intersp=1,y.intersp=1)
+  #screen(4)
+  par(mar = c(0,0,0,0))
+  plot(1, type="n", axes=F, xlab="", ylab="")
+  legend("center",text[(b1+1):b2],cex=1.25,fill=cols[(b1+1):b2],bty="n",x.intersp=1,y.intersp=1)
+  #screen(5)
+  par(mar = c(0,0,0,0))
+  plot(1, type="n", axes=F, xlab="", ylab="")
+  legend("center",text[(b2+1):length(text)],cex=1.25,fill=cols[(b2+1):length(text)],bty="n",x.intersp=1,y.intersp=1)
+  par( old.par )
+  
+}
+
