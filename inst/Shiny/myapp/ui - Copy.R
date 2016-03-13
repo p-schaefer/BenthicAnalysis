@@ -6,33 +6,28 @@ shinyUI(
                             h2("Introduction"),
                             helpText("A package for the analysis of Benthic Macroinvertebrate (BMI) data
                                      using a Reference Condition Approach. Impairment is determined using the Test Site Analysis (TSA). 
-                                     This package provides functionallity for:"),
-                            helpText("1) calculation of many commonly used indicator metrics for assessing the status BMI communities;"),
-                            helpText("2) nearest-neighbour site matching using Assessment by Nearest-Neighbour
-                                        Analysis (ANNA), the Redundancy Analysis variant of ANNA (RDA-ANNA) or user-defined reference sites;"),
-                            helpText("3) calculation of common Test Site Analysis parameters, including: F-statistic, non-centrality parameter, interval and equivalnce tests,
-                                     z-scores for all calculated metrics, mahalanobis distance scores for all sites, partial mahalanobis distance scores
-                                     for assessing significance of individual metrics, as well as upper and lower thresholds for impairment ranks;"),
-                            helpText("4) a variety of diagnostic plots and tools for assessing the confidence of the impairment rank. These include a non-paramtetric randomization
-                                     test for the impairment rank, jacknife confidence intervals and consistency scores of the selected reference sites and jacknife consistancy of the 
-                                     entire reference set."),
+                                     This package provides functionallity for: 1)calculation of many commonly used indicator metrics for summarizing BMI communities;
+                                     2) automated nearest-neighbour site matching (ANNA and RDA-ANNA) or user-defined reference sites;
+                                     3) a variety of diagnostic plots and tools for assessing the confidence of the impairment rank."),
+                            br(),
                             h2("Instructions"),
                             h3("Data Input"),
                             helpText("All input data files must have the same site identification structure. 
-                                     All input data files must be in .csv format. On rare occasions clicking too many checkboxes in rapid succession
-                                     will result in the program getting stuck in an infinite loop and will require closing and reopening it."),
-                            helpText("Minimum requirments are:" ),
-                            helpText("1. Biological data as either raw taxa or summary metrics. Taxa data must follow the format of the example dataset- data('YKBioData')"),
-                            helpText("2. At least one of the following: a table of environmental and habitat features for site
-                                     matching and/or a table matching test sites with pre-selected reference sites."),
-                            helpText("3. If only habitat and environmental variables supplied for ANNA/RDA-ANNA site matching the user must specify
-                                     which sites are to be treated as reference vs test sites."),
+                                     All input data files must be in .csv format."),
+                            helpText("Minimum data requirments are:" ),
+                            helpText("1.'Biological data'"),
+                            helpText("2. at least one of: 'Environmental Data' or 'User Matched Reference Sites'"),
+                            helpText("3. Some sites must be selected as Reference Sites"),
+                            br(),
                             h3("Individual Site Analysis"),
                             helpText("This section allows for detailed exploration of individual sites"),
+                            br(),
                             h3("Batch Analysis"),
-                            helpText("This section allows for analysis of large numbers of sites.
-                                      If the analysis is working correctly a progress bar will appear near the top of the display.
-                                      Do not interact with the user interface while the analysis is working, or it may get stuck in an infinte loop.")
+                            helpText("This section allows for analysis of large numbers of sites"),
+                            helpText("Method 1: ANNA site matching"),
+                            helpText("Method 2: RDA-ANNA site matching with user identified indicator metrics"),
+                            helpText("Method 3: User selected site matching")
+                            
                             ),
                    
                    #########################################################
@@ -48,7 +43,7 @@ shinyUI(
                                        sidebarLayout(
                                          sidebarPanel(
                                            h3("Biological Data"),
-                                           helpText("Select file containing raw taxa data for calculating summary metrics, or metrics calculated by the user.", 
+                                           helpText("Select file containing raw taxa data for calculating summary metrics.", 
                                                     "Taxa identifiers must to be split into 2 rows."),
                                            
                                            fileInput("inbioFile", label = h4("File input - Taxa")),
@@ -82,13 +77,15 @@ shinyUI(
                               tabPanel("Site Matching Data",
                                        sidebarLayout(
                                          sidebarPanel(
-                                           h3("Habitat and environmental data for ANNA/RDA-ANNA site matching and/or user matched reference sites"),
-                                           helpText("At least one of the following two file inputs is required. Site names must match format of biological data."),
-                                           br(),
-                                           helpText("Select file containing habitat and environmental data for site matching."),
+                                           h3("Habitat and landscape Data and/or user matched reference sites"),
+                                           helpText("At least one of the two file inputs is required.",
+                                             "Select file containing landscape and habitat data for site matching.",
+                                                    "Site names must match format of biological data.",
+                                                    "This panel will be optional in the future to allow users to just use pre-selected reference sites."),
+                                           
                                            fileInput("inenvFile", label = h4("File input")),
                                            "-------------------------------------",
-                                           helpText("User matched test and reference samples."),
+                                           helpText("Identify matching reference site samples for each test site sample"),
                                            fileInput("inrefmatchFile", label = h4("File input")),
                                            br(),
                                            downloadButton('downloadenvData', 'Export Environmental Data')
@@ -110,11 +107,10 @@ shinyUI(
                                        sidebarLayout(
                                          sidebarPanel(
                                            h3("Select Reference sites"),
-                                           helpText("Select which sites should be treated as Reference sites.
-                                                    Input file must have same site name structure as biological data file.
-                                                    Reference sites are identified with a 1, test site with 0.
-                                                    If user site matching data were provided, reference sites should already be 
-                                                    selected by default."),
+                                           helpText("Select which sites should be treated as Reference sites",
+                                                    "Input file must have same site name structure as biological data file.",
+                                                    "Reference sites are identified with a 1, test site with 0",
+                                                    "Future implimentation - select internal reference data"),
                                            
                                            fileInput("inrefIDFile", label = h4("File input"))
                                            
@@ -157,10 +153,10 @@ shinyUI(
                                 sidebarLayout(
                                   sidebarPanel(
                                     h2("Reference Site Matching"),
-                                    helpText("Both ANNA and RDA-ANNA "),
+                                    helpText("Text describing site matching"),
                                     br(),
-                                    conditionalPanel("output.usersitematchavail==1",h4("User Matched Reference Sites")),
-                                    conditionalPanel("output.usersitematchavail==1",checkboxInput("user.ref.sitematch","User matched Reference Sites",value=F)),
+                                    h4("User Matched Reference Sites"),
+                                    checkboxInput("user.ref.sitematch","User matched Reference Sites",value=F),
                                     br(),
                                     radioButtons("nn.method", label = h4("Nearest-Neighbour Method"),
                                                choices = list("ANNA" = "ANNA", "RDA-ANNA" = "RDA-ANNA"), selected = "ANNA"),
@@ -198,12 +194,11 @@ shinyUI(
                                          sidebarPanel(
                                            h2("Select Indicator Metrics"),
                                            helpText("Select which indicator metrics should be used for further analysis.",
-                                                    "Adaptive metric selection is available if input biological data were raw taxa counts."),
+                                                    "Adaptive metric selection is still possible on the selected subset of metrics"),
                                            actionButton("selectallmet", label = "Select All"),
                                            actionButton("selectnonemet", label = "Select None"),
                                            br(),
-                                           conditionalPanel("input.metdata==false",
-                                                            conditionalPanel("output.nnmethodselected==1",checkboxInput("mselect","Automatically select indicator metrics for analysis?",value=F)))
+                                           checkboxInput("m.select","Automatically select indicator metrics for analysis?",value=F)
                                          ),
                                          mainPanel(
                                            tabsetPanel(types="tabs",
@@ -238,7 +233,7 @@ shinyUI(
                                                        tabPanel(title="Correspondance Analysis",
                                                                 plotOutput("tsa.ca",height=600)),
                                                        tabPanel(title="Selected Metrics",
-                                                                conditionalPanel("input.mselect==true",verbatimTextOutput("print.sel.met"))),
+                                                                verbatimTextOutput("print.sel.met")),
                                                        tabPanel(title="Tables",
                                                                 tabsetPanel(types="pills",
                                                                              tabPanel(title="TSA Results",verbatimTextOutput("tsa.results")),
@@ -267,31 +262,29 @@ shinyUI(
                                                         uiOutput("batch.nn.method"))
                                                         ),
                                                       conditionalPanel(condition="output.dataavail==1",
+                                                      conditionalPanel(condition="output.envdataavail==1",
+                                                                       fluidRow(wellPanel(radioButtons("nnmethod.user",label=h4("Ecological distance Calculation:"),choices=c("ANNA","RDA-ANNA"),inline=T),
+                                                                                          helpText("Use an adaptive threshold to determine the number of nearest neighbour reference sites?"),
+                                                                                          checkboxInput("ab.adaptive","Adaptive",value=T),
+                                                                                          helpText("Number of reference sites to select. Acts as upper limit if Adaptive selection used."),
+                                                                                          numericInput("ab.k.sel", label = h4(""), value = 0)
+                                                                       ))
+                                                      ),
                                                       fluidRow(
                                                         column(7,
                                                                conditionalPanel(condition = "input.nnmethod!='User Selected'", 
                                                                                 wellPanel(
                                                                                   h4("Site Matching Options"),
                                                                                   helpText("Use an adaptive threshold to determine the number of nearest neighbour reference sites?"),
-                                                                                  checkboxInput("ab.adaptive2","Adaptive",value=T),
+                                                                                  checkboxInput("ab.adaptive","Adaptive",value=T),
                                                                                   helpText("Number of reference sites to select. Acts as upper limit if Adaptive selection used."),
-                                                                                  numericInput("ab.k.sel2", label = h4(""), value = 0)
+                                                                                  numericInput("ab.k.sel", label = h4(""), value = 0)
                                                                )),
                                                                wellPanel(
                                                                  h4("Test Site Analysis Options"),
                                                                  conditionalPanel(condition = "output.envdataavail1==1",checkboxInput("ab.distance","Use ecological distance to weigh Mahalanobis Distance?",value=F)),
                                                                  checkboxInput("ab.outlier.rem","Remove outlier reference sites?",value=F)
                                                                ),
-                                                               conditionalPanel(condition="output.envdataavail==1",
-                                                                                conditionalPanel(condition="output.ecodistwithuserrefsites==1",fluidRow(wellPanel(h4("Ecological distance Calculation:"),
-                                                                                                                                                                  radioButtons("nnmethod.user",label="For weighted mahalanobis distance calculation only:",choices=c("ANNA","RDA-ANNA"),inline=T),
-                                                                                                                                                                  helpText("Use an adaptive threshold to determine the number of nearest neighbour reference sites?"),
-                                                                                                                                                                  checkboxInput("ab.adaptive1","Adaptive",value=T),
-                                                                                                                                                                  helpText("Number of reference sites to select. Acts as upper limit if Adaptive selection used."),
-                                                                                                                                                                  numericInput("ab.k.sel1", label = h4(""), value = 0)
-                                                                                )))
-                                                               ),
-                                                               
                                                                wellPanel(
                                                                  h4("Ouptput and plotting Options"),
                                                                  actionButton("ab.dir","Select Directory"),
@@ -310,7 +303,7 @@ shinyUI(
                                                                ),
                                                                wellPanel(
                                                                  conditionalPanel(condition="output.seldir==0",
-                                                                                          helpText("Select output directory and at least 3 indicator metrics to begin batch run")
+                                                                                          helpText("Select output directory to begin batch run")
                                                                ),
                                                                  conditionalPanel(condition="output.seldir==1",
                                                                                   actionButton("ab.go","Run")
@@ -320,8 +313,7 @@ shinyUI(
                                                         column(5,
                                                                wellPanel(
                                                                  h4("Metric Selection"),
-                                                                 conditionalPanel(condition="input.metdata==false",
-                                                                                  conditionalPanel("input.nnmethod!='RDA-ANNA'",checkboxInput("ab.m.select","Automatically select indicator metrics for analysis?",value=F))),
+                                                                 conditionalPanel(condition="input.metdata==false",checkboxInput("ab.m.select","Automatically select indicator metrics for analysis?",value=F)),
                                                                  br(),
                                                                  helpText("Selected Indicator Metrics"),
                                                                  actionButton("ab.selectallmet", label = "Select All"),
@@ -329,9 +321,9 @@ shinyUI(
                                                                  uiOutput("ab.choose_columns1")
                                                                ))
                                                       ))),
-                                             tabPanel(title="Results",
+                                             conditionalPanel("output.abdone==1",tabPanel(title="Results",
                                                       conditionalPanel(condition = "output.abdone==1",
-                                                                       dataTableOutput("ab.results")))
+                                                                       dataTableOutput("ab.results"))))
 
                                        ))))
                    

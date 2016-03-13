@@ -44,7 +44,6 @@ shinyServer(function(input, output, session) {
         d$Raw.Data1<-NULL
         d$Summary.Metrics1<-cbind(d$Site.List,d$Summary.Metrics)
         colnames(d$Summary.Metrics1)[1]<-"Sites"
-        class(d)<-"benth.metric"
         d
       }
     }
@@ -132,45 +131,6 @@ shinyServer(function(input, output, session) {
   )
   
   #########################################################
-  #User matched Reference sites
-  ########################################################
-  
-  user.site.match<-reactive({
-    inuser.site.matchFile <- input$inrefmatchFile
-    if (is.null(inuser.site.matchFile)){
-      return(NULL)
-    }
-    x<-data.frame(read.csv(inuser.site.matchFile$datapath, header=T,strip.white=TRUE))
-    if (any(as.vector(x[,1])%in%bio.data()$Site.List==F)) {
-      stop("Site mismatch between biological data and user site matched data")
-    } 
-    if (any(apply(x[-c(1),],1,function(x) any(duplicated(unlist(x[which(x!="")]))==T))==T)) {
-      stop("Duplicate Reference sample names detected for one or more test samples")
-    } 
-    if (any(apply(x,1,function(x) any(duplicated(unlist(x[which(x!="")]))==T))==T)|any(d2[,1]%in%unlist(d2[,-c(1)])==T)) {
-      stop("A sample cannot be classified as both test and reference")
-    } else {
-      x
-    }
-  })
-  
-  output$usersitematch.table<-renderTable({
-    if (is.null(user.site.match())){
-      return(NULL)
-    }
-    user.site.match()
-  })
-  
-  output$usersitematchavail<-reactive({
-    if (is.null(user.site.match())){
-      return(0)
-    } else {
-      return(1)
-    }
-  })
-  outputOptions(output, 'usersitematchavail', suspendWhenHidden=FALSE)
-  
-  #########################################################
   #Identify Reference Sites
   ########################################################
   refID.data<-reactive({
@@ -202,15 +162,15 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  # Check boxes
   output$choose_columns <- renderUI({
     if (is.null(bio.data())){
       return(NULL)
     }
-    
-    if (!is.null(user.site.match())) {
-      refID <- user.site.match()[,1]
+    # If missing input, return to avoid error later in function
+    if(is.null(refID.data())){
+      # Get the data set with the appropriate name
       colnames <- rownames(bio.data()$Summary.Metrics)
-      
       b1<-ceiling(length(colnames)*1/4)
       b2<-ceiling(length(colnames)*2/4)
       b3<-ceiling(length(colnames)*3/4)
@@ -220,48 +180,40 @@ shinyServer(function(input, output, session) {
       c3<-colnames[(b2+1):b3]
       c4<-colnames[(b3+1):length(colnames)]
       
-      splitLayout(checkboxGroupInput("c1", "",choices  = c1,selected = c1[!c1%in%refID]),
-                  checkboxGroupInput("c2", "",choices  = c2,selected = c2[!c2%in%refID]),
-                  checkboxGroupInput("c3", "",choices  = c3,selected = c3[!c3%in%refID]),
-                  checkboxGroupInput("c4", "",choices  = c4,selected = c4[!c4%in%refID]))
+      
+      # Create the checkboxes and select them all by default
+      splitLayout(checkboxGroupInput("c1", "", 
+                         choices  = c1),
+                  checkboxGroupInput("c2", "", 
+                                     choices  = c2),
+                  checkboxGroupInput("c3", "", 
+                                     choices  = c3),
+                  checkboxGroupInput("c4", "", 
+                                     choices  = c4))
     } else {
-      if(is.null(refID.data())){
-        colnames <- rownames(bio.data()$Summary.Metrics)
-        b1<-ceiling(length(colnames)*1/4)
-        b2<-ceiling(length(colnames)*2/4)
-        b3<-ceiling(length(colnames)*3/4)
-        
-        c1<-colnames[1:b1]
-        c2<-colnames[(b1+1):b2]
-        c3<-colnames[(b2+1):b3]
-        c4<-colnames[(b3+1):length(colnames)]
-        
-        splitLayout(checkboxGroupInput("c1", "", choices  = c1),
-                    checkboxGroupInput("c2", "", choices  = c2),
-                    checkboxGroupInput("c3", "", choices  = c3),
-                    checkboxGroupInput("c4", "", choices  = c4))
-      } else {
-        refID <- refID.data()[,2]
-        colnames <- refID.data()[,1]
-        
-        b1<-ceiling(length(colnames)*1/4)
-        b2<-ceiling(length(colnames)*2/4)
-        b3<-ceiling(length(colnames)*3/4)
-        
-        c1<-colnames[1:b1]
-        s1<-refID[1:b1]
-        c2<-colnames[(b1+1):b2]
-        s2<-refID[(b1+1):b2]
-        c3<-colnames[(b2+1):b3]
-        s3<-refID[(b2+1):b3]
-        c4<-colnames[(b3+1):length(colnames)]
-        s4<-refID[(b3+1):length(colnames)]
-        
-        splitLayout(checkboxGroupInput("c1", "",choices  = c1,selected = c1[!c1%in%refID]),
-                    checkboxGroupInput("c2", "",choices  = c2,selected = c2[!c2%in%refID]),
-                    checkboxGroupInput("c3", "",choices  = c3,selected = c3[!c3%in%refID]),
-                    checkboxGroupInput("c4", "",choices  = c4,selected = c4[!c4%in%refID]))
-      }
+      # Get the data set with the appropriate name
+      refID <- refID.data()[,2]
+      colnames <- refID.data()[,1]
+      
+      b1<-ceiling(length(colnames)*1/4)
+      b2<-ceiling(length(colnames)*2/4)
+      b3<-ceiling(length(colnames)*3/4)
+      
+      c1<-colnames[1:b1]
+      s1<-refID[1:b1]
+      c2<-colnames[(b1+1):b2]
+      s2<-refID[(b1+1):b2]
+      c3<-colnames[(b2+1):b3]
+      s3<-refID[(b2+1):b3]
+      c4<-colnames[(b3+1):length(colnames)]
+      s4<-refID[(b3+1):length(colnames)]
+      
+      # Create the checkboxes and select them all by default
+      splitLayout(checkboxGroupInput("c1", "",choices  = c1,selected = c1[which(s1==1)]),
+                  checkboxGroupInput("c2", "",choices  = c2,selected = c2[which(s2==1)]),
+                  checkboxGroupInput("c3", "",choices  = c3,selected = c3[which(s3==1)]),
+                  checkboxGroupInput("c4", "",choices  = c4,selected = c4[which(s4==1)]))
+      
     }
   })
   
@@ -269,12 +221,7 @@ shinyServer(function(input, output, session) {
     if (is.null(bio.data())){
       return(NULL)
     }
-    if (!is.null(input$c1)){
-      c(input$c1,input$c2,input$c3,input$c4)
-    }
-    if (!is.null(user.site.match())){
-      rownames(bio.data()$Summary.Metrics)[!rownames(bio.data()$Summary.Metrics)%in%user.site.match()[,1]]
-    }
+    c(input$c1,input$c2,input$c3,input$c4)
   })
   
   output$selrefID <- renderPrint({
@@ -308,6 +255,29 @@ shinyServer(function(input, output, session) {
     colnames[which(!colnames%in%sel.ref())]
   })
   
+  #########################################################
+  #User matched Reference sites
+  ########################################################
+  
+  user.site.match<-reactive({
+    inuser.site.matchFile <- input$inrefmatchFile
+    if (is.null(inuser.site.matchFile)){
+      return(NULL)
+    }
+    x<-data.frame(read.csv(inuser.site.matchFile$datapath, header=T,strip.white=TRUE))
+    if (any(as.vector(x[,1])%in%bio.data()$Site.List==F)) {
+      stop("Site mismatch between biological data and user site matched data")
+    } else {
+      x
+    }
+  })
+  
+  output$usersitematch.table<-renderTable({
+    if (is.null(user.site.match())){
+      return(NULL)
+    }
+    user.site.match()
+  })
   
   #########################################################
   #INDIVIDUAL SITE ANALYSIS
@@ -344,23 +314,9 @@ shinyServer(function(input, output, session) {
   k<-reactive({input$k.sel})
   adaptive<-reactive({input$adaptive})
   nn.method<-reactive({input$nn.method})
-  
-  output$nnmethodselected<-reactive({
-    if (input$nn.method=="RDA-ANNA"){
-      return(0)
-    } else {
-      return(1)
-    }
-  })
-  outputOptions(output, 'nnmethodselected', suspendWhenHidden=FALSE)
-  
+
   nn.sites<-reactive({
     if (is.null(test.site())){
-      return(NULL)
-    }
-    sel.mets<-sel.mets()
-    if (is.null(sel.mets) & nn.method()=="RDA-ANNA"){
-      stop("Must select indicator metrics before RDA-ANNA is possible")
       return(NULL)
     }
     if (!use.user.site.match()) {
@@ -369,7 +325,7 @@ shinyServer(function(input, output, session) {
                              Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
                              k= if (k()!=0 & k()<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) k() else NULL,
                              adaptive=adaptive(),
-                             RDA.reference = if (nn.method()=="RDA-ANNA") {bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),sel.mets]} else {NULL} )
+                             RDA.reference = if (nn.method()=="RDA-ANNA") bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),])
         nn.sites
       } else {
         return(NULL)
@@ -381,7 +337,7 @@ shinyServer(function(input, output, session) {
                              Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
                              k= if (k()!=0 & k()<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) k() else NULL,
                              adaptive=adaptive(),
-                             RDA.reference = if (nn.method()=="RDA-ANNA") {bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),sel.mets]} else {NULL})
+                             RDA.reference = if (nn.method()=="RDA-ANNA") bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),])
         nn.sites$final.dist<-NULL
         nn.sites$final.dist<-nn.sites$all.dist[paste(unlist(user.site.match()[which(user.site.match()[,1]%in%test.site()),2:length(which(user.site.match()[which(user.site.match()[,1]%in%test.site()),]!=""))]))]
         nn.sites
@@ -392,7 +348,6 @@ shinyServer(function(input, output, session) {
         names(nn.sites$final.dist)<-nn.sites$final.dist
         nn.sites$method<-NULL
         nn.sites$method<-"User Selected"
-        class(nn.sites)<-"match.object"
         nn.sites
         
       }
@@ -523,48 +478,90 @@ shinyServer(function(input, output, session) {
     if (is.null(bio.data())){
       return(NULL)
     }
+    
     if (input$metdata==F){
-      if (nn.method()=="RDA-ANNA"){
-        colnames<-colnames(bio.data()$Summary.Metrics)
+      if (!is.null(nn.sites())){
+        colnames<-colnames(add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),]))
       } else {
-        colnames<-isolate(colnames(add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])))
+        colnames<-colnames(bio.data()$Summery.Metrics)
       }
     } else {
       colnames<-colnames(bio.data()$Summary.Metrics)
     }
     
-    checkboxGroupInput("b1", "", choices  = colnames, selected=NULL)#colnames[colnames%in%sel.mets()])
+    checkboxGroupInput("b1", "", choices  = colnames, selected=colnames[colnames%in%sel.mets()])
+
+    #b1<-ceiling(length(colnames)*1/4)
+    #b2<-ceiling(length(colnames)*2/4)
+    #b3<-ceiling(length(colnames)*3/4)
+    
+    #c1<-colnames[1:b1]
+    #c2<-colnames[(b1+1):b2]
+    #c3<-colnames[(b2+1):b3]
+    #c4<-colnames[(b3+1):length(colnames)]
+    
+    #c11<-colnames[colnames[1:b1]%in%sel.mets()]
+    #c21<-colnames[colnames[(b1+1):b2]%in%sel.mets()]
+    #c31<-colnames[colnames[(b2+1):b3]%in%sel.mets()]
+    #c41<-colnames[colnames[(b3+1):length(colnames)]%in%sel.mets()]
+
+    
+    # Create the checkboxes and select them all by default
+    #splitLayout(checkboxGroupInput("b1", "", choices  = c1, selected=c11),
+    #            checkboxGroupInput("b2", "", choices  = c2, selected=c21),
+    #            checkboxGroupInput("b3", "", choices  = c3, selected=c31),
+    #            checkboxGroupInput("b4", "", choices  = c4, selected=c41))
   })
   
   observe({
     if (input$selectallmet>0){
       if (input$metdata==F){
-        if (nn.method()=="RDA-ANNA"){
-          colnames<-colnames(bio.data()$Summary.Metrics)
-        } else {
-          colnames<-isolate(colnames(add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])))
-        }
+        colnames<-colnames(add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),]))
       } else {
         colnames<-colnames(bio.data()$Summary.Metrics)
       }
       
       updateCheckboxGroupInput(session=session, inputId="b1", choices=colnames, selected=colnames)
+      
+      #b1<-ceiling(length(colnames)*1/4)
+      #b2<-ceiling(length(colnames)*2/4)
+      #b3<-ceiling(length(colnames)*3/4)
+      
+      #c1<-colnames[1:b1]
+      #c2<-colnames[(b1+1):b2]
+      #c3<-colnames[(b2+1):b3]
+      #c4<-colnames[(b3+1):length(colnames)]
+      
+      #updateCheckboxGroupInput(session=session, inputId="b1", choices=c1, selected=c1)
+      #updateCheckboxGroupInput(session=session, inputId="b2", choices=c2, selected=c2)
+      #updateCheckboxGroupInput(session=session, inputId="b3", choices=c3, selected=c3)
+      #updateCheckboxGroupInput(session=session, inputId="b4", choices=c4, selected=c4)
     }
   })
   
   observe({
     if (input$selectnonemet>0){
       if (input$metdata==F){
-        if (nn.method()=="RDA-ANNA"){
-          colnames<-colnames(bio.data()$Summary.Metrics)
-        } else {
-          colnames<-isolate(colnames(add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])))
-        }
+        colnames<-colnames(add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),]))
       } else {
         colnames<-colnames(bio.data()$Summary.Metrics)
       }
       
       updateCheckboxGroupInput(session=session, inputId="b1", choices=colnames, selected=NULL)
+      
+      #b1<-ceiling(length(colnames)*1/4)
+      #b2<-ceiling(length(colnames)*2/4)
+      #b3<-ceiling(length(colnames)*3/4)
+      
+      #c1<-colnames[1:b1]
+      #c2<-colnames[(b1+1):b2]
+      #c3<-colnames[(b2+1):b3]
+      #c4<-colnames[(b3+1):length(colnames)]
+      
+      #updateCheckboxGroupInput(session=session, inputId="b1", choices=c1, selected=NULL)
+      #updateCheckboxGroupInput(session=session, inputId="b2", choices=c2, selected=NULL)
+      #updateCheckboxGroupInput(session=session, inputId="b3", choices=c3, selected=NULL)
+      #updateCheckboxGroupInput(session=session, inputId="b4", choices=c4, selected=NULL)
     }
   })
   
@@ -580,14 +577,14 @@ shinyServer(function(input, output, session) {
   ########################################################
   distance<-reactive({input$distance})
   outlier.rem<-reactive({input$outlier.rem})
-  m.select<-reactive({input$mselect})
+  m.select<-reactive({input$m.select})
 
   
   tsa.results<-reactive({
     if (is.null(nn.sites())){
       return(NULL)
     }
-    if (input$metdata==T & input$mselect==T) {
+    if (input$metdata==T & input$m.select==T) {
       stop("Automated metric selection not available when input data are indicator metrics")
     }
     
@@ -856,18 +853,6 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  output$ecodistwithuserrefsites<-reactive({
-    nnmethod<-input$nnmethod
-    ab.distance<-input$ab.distance
-    if (is.null(nnmethod) | is.null(ab.distance)){
-      return(0)
-    } else if (nnmethod=="User Selected" & ab.distance==T){
-      return(1)
-    } 
-  })
-  
-  outputOptions(output, 'ecodistwithuserrefsites', suspendWhenHidden=FALSE)
-  
   outputOptions(output, 'envdataavail', suspendWhenHidden=FALSE)
   outputOptions(output, 'sitematchdataavail', suspendWhenHidden=FALSE)
   outputOptions(output, 'onlyenv', suspendWhenHidden=FALSE)
@@ -899,7 +884,7 @@ shinyServer(function(input, output, session) {
           }
         }
       }
-      checkboxGroupInput("ab.b1", "", choices  = colnames, selected=NULL)
+      checkboxGroupInput("ab.b1", "", choices  = colnames, selected=colnames[colnames%in%ab.sel.mets()])
     }
   })
   
@@ -965,33 +950,6 @@ shinyServer(function(input, output, session) {
   
   output$show.sel.dir<-renderText({sel.dir()})
   
-  ab.adaptive<-reactive({
-    ab.adaptive1<-input$ab.adaptive1
-    ab.adaptive2<-input$ab.adaptive2
-    if (ab.adaptive1==F | ab.adaptive2==F){
-      return(FALSE)
-    } else {
-      return(TRUE)
-    }
-  })
-  
-  ab.k<-reactive({
-    ab.k.sel1<-input$ab.k.sel1
-    ab.k.sel2<-input$ab.k.sel2
-    if (ab.k.sel1!=0){
-      return(ab.k.sel1)
-    }
-    if (ab.k.sel2!=0){
-      return(ab.k.sel2)
-    }
-    if (is.null(ab.k.sel1) & is.null(ab.k.sel2)){
-      return(0)
-    }
-    if (ab.k.sel1==0 & ab.k.sel2==0){
-      return(0)
-    }
-  })
-  
   results<-reactive({
     if (input$ab.go>0){
       if (sel.dir()=="No Directory Selected"){
@@ -1003,18 +961,9 @@ shinyServer(function(input, output, session) {
           colnames(results)<-c("Impairment Rank","Interval Test","Equivalence Test","Randomization Test","Test Site D2","Lower Critical","Upper Critical",
                                "TSA Lambda","TSA F Value","Number of Metrics","Number of Reference Sites","Nearest-Neighbour Method","Jacknife Consistency",
                                "Indicator Metrics","Significant Metrics","Reference Sites")
-          new.dirs<-isolate(c(input$ab.nnscatter.plot,input$ab.nndist.plot,input$ab.tsadist.plot,input$ab.tsabox.plot,input$ab.tsascatter.plot,
-                      input$ab.cascatter.plot,input$ab.multi.plot))
+          new.dirs<-c(input$ab.nnscatter.plot,input$ab.nndist.plot,input$ab.tsadist.plot,input$ab.tsabox.plot,input$ab.tsascatter.plot,
+                      input$ab.cascatter.plot,input$ab.multi.plot)
           new.dir.names<-c("NN Ordination", "NN Distance", "TSA Distance", "TSA Boxplot", "TSA Ordination", "CA Ordination", "Multiplot")
-          
-          ab.sel.mets<-isolate(ab.sel.mets())
-          nnmethod<-isolate(input$nn.method)
-          ab.adaptive<-isolate(ab.adaptive())
-          ab.k<-isolate(ab.k())
-          ab.outlier.rem<-isolate(input$ab.outlier.rem)
-          ab.m.select<-isolate(input$ab.m.select)
-          ab.distance<-isolate(input$ab.distance)
-
           if (any(new.dirs==T)){
             for (i in new.dir.names[new.dirs]){
               dir.create(paste0(sel.dir(),"/",i),showWarnings = F)
@@ -1025,48 +974,62 @@ shinyServer(function(input, output, session) {
             n<-which(test.site.choices()%in%i)
             incProgress(1/length(test.site.choices()), detail = paste("In progress: ", i))
             
-            if (nnmethod=="RDA-ANNA"){
+            if (input$nnmethod=="RDA-ANNA"){
               nn.sites<-try(site.match(Test=env.data()[which(env.data()[,"Sites"]%in%i),-c(1)],
                                    Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
-                                   k= if (ab.k!=0 & ab.k<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) ab.k else NULL,
-                                   adaptive=ab.adaptive,
-                                   RDA.reference=bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),ab.sel.mets]),
+                                   k=if (input$ab.k.sel!=0 & input$ab.k.sel<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) input$ab.k.sel else NULL,
+                                   adaptive=input$ab.adaptive,
+                                   RDA.reference=bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),ab.sel.mets()]),
                             silent=T)
               if(is(nn.sites,"try-error")){
                 results[i,1]<-nn.sites[1]
                 next
               } else {
+                #nn.sites<-site.match(Test=env.data()[which(env.data()[,"Sites"]%in%i),-c(1)],
+                #                         Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
+                #                         k=if (input$ab.k.sel!=0 & input$ab.k.sel<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) input$ab.k.sel else NULL,
+                #                         adaptive=input$ab.adaptive,
+                #                         RDA.reference=bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),ab.sel.mets()])
                 nn.sites$method1<-NULL
-                nn.sites$method1<-"RDA-ANNA"
+                nn.sites$method1<-"ANNA"
               }
             }
-            if (nnmethod=="ANNA"){
+            if (input$nnmethod=="ANNA"){
               nn.sites<-try(site.match(Test=env.data()[which(env.data()[,"Sites"]%in%i),-c(1)],
                                    Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
-                                   k= if (ab.k!=0 & ab.k<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) ab.k else NULL,
-                                   adaptive=ab.adaptive),
+                                   k=if (input$ab.k.sel!=0 & input$ab.k.sel<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) input$ab.k.sel else NULL,
+                                   adaptive=input$ab.adaptive),
                             silent=T)
               if(is(nn.sites,"try-error")){
                 results[i,1]<-nn.sites[1]
                 next
               } else {
+                #nn.sites<-site.match(Test=env.data()[which(env.data()[,"Sites"]%in%i),-c(1)],
+                #                         Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
+                #                         k=if (input$ab.k.sel!=0 & input$ab.k.sel<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) input$ab.k.sel else NULL,
+                #                         adaptive=input$ab.adaptive)
                 nn.sites$method1<-NULL
                 nn.sites$method1<-"ANNA"
                 
               }
             }
-            if (nnmethod=="User Selected"){
+            if (input$nnmethod=="User Selected"){
               if (!is.null(env.data())) {
                 nn.sites<-try(site.match(Test=env.data()[which(env.data()[,"Sites"]%in%i),-c(1)],
                                      Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
-                                     k= if (ab.k!=0 & ab.k<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) ab.k else NULL,
-                                     adaptive=ab.adaptive,
-                                     RDA.reference = if (isolate(input$nnmethod.user=="RDA-ANNA")) {bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),ab.sel.mets]} else {NULL}),
+                                     k= if (k()!=0 & k()<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) k() else NULL,
+                                     adaptive=adaptive(),
+                                     RDA.reference = if (input$nnmethod.user=="RDA-ANNA") bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),ab.sel.mets()]),
                               silent=T)
                 if(is(nn.sites,"try-error")){
                   results[i,1]<-nn.sites[1]
                   next
                 } else {
+                  #nn.sites<-site.match(Test=env.data()[which(env.data()[,"Sites"]%in%i),-c(1)],
+                  #                         Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
+                  #                         k= if (k()!=0 & k()<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) k() else NULL,
+                  #                         adaptive=adaptive(),
+                  #                         RDA.reference = if (input$nnmethod.user=="RDA-ANNA") bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),ab.sel.mets()])
                   nn.sites$method1<-NULL
                   nn.sites$method1<-"User Selected with distance"
                 }
@@ -1084,29 +1047,41 @@ shinyServer(function(input, output, session) {
             }
             
             if (input$metdata==F){
-              tsa.results<-try(tsa.test(Test=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[names(nn.sites$final.dist),])[(1+length(nn.sites$final.dist)),ab.sel.mets],
-                                    Reference=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[names(nn.sites$final.dist),])[1:length(nn.sites$final.dist),ab.sel.mets],
-                                    distance= if (ab.distance) nn.sites$final.dist else NULL,
-                                    outlier.rem= ab.outlier.rem,
-                                    m.select= ab.m.select),
+              tsa.results<-try(tsa.test(Test=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[names(nn.sites$final.dist),])[(1+length(nn.sites$final.dist)),ab.sel.mets()],
+                                    Reference=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[names(nn.sites$final.dist),])[1:length(nn.sites$final.dist),ab.sel.mets()],
+                                    distance= if (input$ab.distance) nn.sites$final.dist else NULL,
+                                    outlier.rem= input$ab.outlier.rem,
+                                    m.select= input$ab.m.select),
                                silent=T)
               if(is(tsa.results,"try-error")){
                 results[i,1]<-tsa.results[1]
                 next
               } else {
+                #tsa.results<-tsa.test(Test=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[names(nn.sites$final.dist),])[(1+length(nn.sites$final.dist)),ab.sel.mets()],
+                #                          Reference=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[names(nn.sites$final.dist),])[1:length(nn.sites$final.dist),ab.sel.mets()],
+                #                          distance= if (input$ab.distance) nn.sites$final.dist else NULL,
+                #                          outlier.rem= input$ab.outlier.rem,
+                #                          m.select= input$ab.m.select)
+                
               }
             } else {
               taxa.data<-rbind(bio.data()$Summary.Metrics.Data[names(nn.sites$final.dist),],bio.data()$Summary.Metrics[i,])
-              tsa.results<-try(tsa.test(Test=taxa.data[(1+length(nn.sites$final.dist)),ab.sel.mets],
-                                    Reference=taxa.data[1:length(nn.sites$final.dist),ab.sel.mets],
-                                    distance= if (ab.distance) nn.sites$final.dist else NULL,
-                                    outlier.rem= ab.outlier.rem,
-                                    m.select= ab.m.select),
+              tsa.results<-try(tsa.test(Test=taxa.data[(1+length(nn.sites$final.dist)),ab.sel.mets()],
+                                    Reference=taxa.data[1:length(nn.sites$final.dist),ab.sel.mets()],
+                                    distance= if (input$ab.distance) nn.sites$final.dist else NULL,
+                                    outlier.rem= input$ab.outlier.rem,
+                                    m.select= input$ab.m.select),
                                silent=T)
               if(is(tsa.results,"try-error")){
                 results[i,1]<-tsa.results[1]
                 next
               } else{
+                #tsa.results<-tsa.test(Test=taxa.data[(1+length(nn.sites$final.dist)),ab.sel.mets()],
+                #                          Reference=taxa.data[1:length(nn.sites$final.dist),ab.sel.mets()],
+                #                          distance= if (input$ab.distance) nn.sites$final.dist else NULL,
+                #                          outlier.rem= input$ab.outlier.rem,
+                #                          m.select= input$ab.m.select)
+                
               }
             }
             results[i,]<-c(tsa.results$tsa.results[1,],tsa.results$tsa.results[2,],tsa.results$tsa.results[3,],tsa.results$tsa.results[4,],
@@ -1115,29 +1090,29 @@ shinyServer(function(input, output, session) {
                            tsa.results$jacknife[1,],tsa.results$general.results[3,],tsa.results$general.results[4,],tsa.results$general.results[2,])
             
             if (any(new.dirs==T)){
-              if (isolate(input$ab.nnscatter.plot)){
+              if (input$ab.nnscatter.plot){
                 if (!is.null(env.data())){
                   jpeg(filename=paste0(sel.dir(),"/NN Ordination/",i,"-nnord.jpeg"),width=640,height=480)
                   sitematch.plot(nn.sites)
                   dev.off()
                 }
               }
-              if (isolate(input$ab.nndist.plot)){
-                if (nnmethod!="User Selected") {
+              if (input$ab.nndist.plot){
+                if (input$nnmethod!="User Selected") {
                   jpeg(filename=paste0(sel.dir(),"/NN Distance/",i,"-nndist.jpeg"),width=640,height=480)
                   plot(nn.sites)
                   dev.off()
                 }
               }
-              if (isolate(input$ab.tsadist.plot)){
+              if (input$ab.tsadist.plot){
                 jpeg(filename=paste0(sel.dir(),"/TSA Distance/",i,"-tsadist.jpeg"),width=640,height=480)
                 plot(tsa.results)
                 dev.off()
               }
-              if (isolate(input$ab.tsabox.plot)){
+              if (input$ab.tsabox.plot){
                 if (input$metdata==T){
                   jpeg(filename=paste0(sel.dir(),"/TSA Boxplot/",i,"-tsabox.jpeg"),width=640,height=480)
-                  boxplottsa(tsa.results)
+                  boxplot(tsa.results)
                   dev.off()
                 } 
                 if (input$metdata==F){
@@ -1180,12 +1155,12 @@ shinyServer(function(input, output, session) {
                   dev.off()
                 }
               }
-              if (isolate(input$ab.tsascatter.plot)){
+              if (input$ab.tsascatter.plot){
                 jpeg(filename=paste0(sel.dir(),"/TSA Ordination/",i,"-tsaord.jpeg"),width=640,height=480)
                 pcoa.tsa(tsa.results)
                 dev.off()
               }
-              if (isolate(input$ab.cascatter.plot)){
+              if (input$ab.cascatter.plot){
                 jpeg(filename=paste0(sel.dir(),"/CA Ordination/",i,"-caord.jpeg"),width=640,height=480)
                 Reference<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
                 nRef<-nrow(Reference)
@@ -1208,7 +1183,7 @@ shinyServer(function(input, output, session) {
                 suppressWarnings(ordiellipse(ca.ord,c(rep(1,nrow(Reference)),0),kind="sd",conf=0.95,draw="line",col="grey20",lty=5,show.groups=1))
                 dev.off()
               }
-              if (isolate(input$ab.multi.plot)){
+              if (input$ab.multi.plot){
                 if (input$metdata==T){
                   l2<-rbind(c(1,2,2,2),c(1,2,2,2),c(3,2,2,2),c(4,4,5,5),c(4,4,5,5),c(6,6,7,7),c(6,6,7,7))
                 } else {
@@ -1222,7 +1197,7 @@ shinyServer(function(input, output, session) {
                 textplot(txt,halign="left", valign="top")
 
                 if (input$metdata==T){
-                  boxplottsa(tsa.results)
+                  boxplot(tsa.results)
                 } else {
                   tsa.stand<-tsa.zscore(Test=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[(1+length(nn.sites$final.dist)),],
                                         Reference=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[1:length(nn.sites$final.dist),])
@@ -1257,22 +1232,22 @@ shinyServer(function(input, output, session) {
                   legend("center",text[(b2+1):length(text)],cex=1,fill=cols[(b2+1):length(text)],bty="n",x.intersp=0.85,y.intersp=0.85)
                 }
                 
-                if (isolate(input$multiplot1.sel=="None")){
+                if (input$multiplot1.sel=="None"){
                   plot(1, type="n", axes=F, xlab="", ylab="")
                 }
-                if (isolate(input$multiplot1.sel=="Nearest-Neighbour Ordination")){
+                if (input$multiplot1.sel=="Nearest-Neighbour Ordination"){
                   sitematch.plot(nn.sites)
                 }
-                if (isolate(input$multiplot1.sel=="Nearest Neighbour Distance")){
+                if (input$multiplot1.sel=="Nearest Neighbour Distance"){
                   plot(nn.sites)
                 }
-                if (isolate(input$multiplot1.sel=="TSA Distance")){
+                if (input$multiplot1.sel=="TSA Distance"){
                   plot(tsa.results)
                 }
-                if (isolate(input$multiplot1.sel=="TSA Ordination")){
+                if (input$multiplot1.sel=="TSA Ordination"){
                   pcoa.tsa(tsa.results)
                 }
-                if (isolate(input$multiplot1.sel=="CA Ordination")){
+                if (input$multiplot1.sel=="CA Ordination"){
                   Reference<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
                   nRef<-nrow(Reference)
                   Test<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
@@ -1293,22 +1268,22 @@ shinyServer(function(input, output, session) {
                   text(x=ca1[(nRef+1)],y=ca2[(nRef+1)],labels=names(ca1)[(nRef+1)],col="red",cex=0.9,pos=3)
                   suppressWarnings(ordiellipse(ca.ord,c(rep(1,nrow(Reference)),0),kind="sd",conf=0.95,draw="line",col="grey20",lty=5,show.groups=1))
                 }
-                if (isolate(input$multiplot2.sel=="None")){
+                if (input$multiplot2.sel=="None"){
                   plot(1, type="n", axes=F, xlab="", ylab="")
                 }
-                if (isolate(input$multiplot2.sel=="Nearest-Neighbour Ordination")){
+                if (input$multiplot2.sel=="Nearest-Neighbour Ordination"){
                   sitematch.plot(nn.sites)
                 }
-                if (isolate(input$multiplot2.sel=="Nearest Neighbour Distance")){
+                if (input$multiplot2.sel=="Nearest Neighbour Distance"){
                   plot(nn.sites)
                 }
-                if (isolate(input$multiplot2.sel=="TSA Distance")){
+                if (input$multiplot2.sel=="TSA Distance"){
                   plot(tsa.results)
                 }
-                if (isolate(input$multiplot2.sel=="TSA Ordination")){
+                if (input$multiplot2.sel=="TSA Ordination"){
                   pcoa.tsa(tsa.results)
                 }
-                if (isolate(input$multiplot2.sel=="CA Ordination")){
+                if (input$multiplot2.sel=="CA Ordination"){
                   Reference<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
                   nRef<-nrow(Reference)
                   Test<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
@@ -1329,22 +1304,22 @@ shinyServer(function(input, output, session) {
                   text(x=ca1[(nRef+1)],y=ca2[(nRef+1)],labels=names(ca1)[(nRef+1)],col="red",cex=0.9,pos=3)
                   suppressWarnings(ordiellipse(ca.ord,c(rep(1,nrow(Reference)),0),kind="sd",conf=0.95,draw="line",col="grey20",lty=5,show.groups=1))
                 }
-                if (isolate(input$multiplot3.sel=="None")){
+                if (input$multiplot3.sel=="None"){
                   plot(1, type="n", axes=F, xlab="", ylab="")
                 }
-                if (isolate(input$multiplot3.sel=="Nearest-Neighbour Ordination")){
+                if (input$multiplot3.sel=="Nearest-Neighbour Ordination"){
                   sitematch.plot(nn.sites)
                 }
-                if (isolate(input$multiplot3.sel=="Nearest Neighbour Distance")){
+                if (input$multiplot3.sel=="Nearest Neighbour Distance"){
                   plot(nn.sites)
                 }
-                if (isolate(input$multiplot3.sel=="TSA Distance")){
+                if (input$multiplot3.sel=="TSA Distance"){
                   plot(tsa.results)
                 }
-                if (isolate(input$multiplot3.sel=="TSA Ordination")){
+                if (input$multiplot3.sel=="TSA Ordination"){
                   pcoa.tsa(tsa.results)
                 }
-                if (isolate(input$multiplot3.sel=="CA Ordination")){
+                if (input$multiplot3.sel=="CA Ordination"){
                   Reference<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
                   nRef<-nrow(Reference)
                   Test<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
@@ -1365,22 +1340,22 @@ shinyServer(function(input, output, session) {
                   text(x=ca1[(nRef+1)],y=ca2[(nRef+1)],labels=names(ca1)[(nRef+1)],col="red",cex=0.9,pos=3)
                   suppressWarnings(ordiellipse(ca.ord,c(rep(1,nrow(Reference)),0),kind="sd",conf=0.95,draw="line",col="grey20",lty=5,show.groups=1))
                 }
-                if (isolate(input$multiplot4.sel=="None")){
+                if (input$multiplot4.sel=="None"){
                   plot(1, type="n", axes=F, xlab="", ylab="")
                 }
-                if (isolate(input$multiplot4.sel=="Nearest-Neighbour Ordination")){
+                if (input$multiplot4.sel=="Nearest-Neighbour Ordination"){
                   sitematch.plot(nn.sites)
                 }
-                if (isolate(input$multiplot4.sel=="Nearest Neighbour Distance")){
+                if (input$multiplot4.sel=="Nearest Neighbour Distance"){
                   plot(nn.sites)
                 }
-                if (isolate(input$multiplot4.sel=="TSA Distance")){
+                if (input$multiplot4.sel=="TSA Distance"){
                   plot(tsa.results)
                 }
-                if (isolate(input$multiplot4.sel=="TSA Ordination")){
+                if (input$multiplot4.sel=="TSA Ordination"){
                   pcoa.tsa(tsa.results)
                 }
-                if (isolate(input$multiplot4.sel=="CA Ordination")){
+                if (input$multiplot4.sel=="CA Ordination"){
                   Reference<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
                   nRef<-nrow(Reference)
                   Test<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
@@ -1432,8 +1407,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$seldir<-reactive({
-    abselmet<-ab.sel.mets()
-    if (sel.dir()!="No Directory Selected" & !is.null(abselmet) & length(abselmet)>2){
+    if (sel.dir()!="No Directory Selected"){
       return(1)
     } else {
       return(0)
