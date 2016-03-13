@@ -28,8 +28,8 @@ $Site.List - Concatenated site names
 Calculation of a variety of metrics for determing impairment of Benthic Macroinvertebrate Communities.
 }
 \examples{
-data(YKBioData,envir = environment())
-benth.met(YKBioData,2,2)
+data(YKEnvData,envir = environment())
+benth.met(bio.data.yk1,2,2)
 }
 \keyword{Benthic}
 \keyword{Metrics}

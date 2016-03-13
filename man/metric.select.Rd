@@ -4,12 +4,14 @@
 \alias{metric.select}
 \title{Indicator metric selection}
 \usage{
-metric.select(Test, Reference, outlier.rem = T)
+metric.select(Test, Reference, outlier.rem = T, rank = F)
 }
 \arguments{
 \item{Test}{Vector containing metric scores at the test site. Should be a single row from \code{benth.met} or \code{add.met}.}
 
 \item{Reference}{Data frame of metric scores at the reference sites. Should be output from \code{benth.met} or \code{add.met}.}
+
+\item{Rank}{Use rank differences in metric selection}
 }
 \value{
 $Best.Metrics - Vector containing the final selected indicator metrics
@@ -37,12 +39,11 @@ If no metrics or too few metrics demonstrate impairment, the following metrics a
 Richness, Percent Dominance, HBI, Percent EPT.
 }
 \examples{
-data(YKBioData,envir = environment())
-bio.data<-benth.met(YKBioData,2,2)$Summary.Metrics
+data(YKEnvData,envir = environment())
+bio.data<-benth.met(bio.data.yk1,2,2)$Summary.Metrics
 nn.refsites<- c("075-T-1", "019-T-1","003-T-1","076-T-1","071-T-1","022-T-1","074-T-1",
 "002-T-1","004-T-1","073-T-1","186-T-1","062-T-1","005-T-1","025-T-1",
 "187-T-1","023-T-1","193-T-1","192-T-1","196-T-1","194-T-1")
-
 metric.select(bio.data[201,],bio.data[nn.refsites,])
 }
 \keyword{Benthic}

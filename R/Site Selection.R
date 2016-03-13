@@ -74,17 +74,26 @@ site.match<-function(Test, Reference, k=NULL, adaptive=T, RDA.reference=NULL) {
       stop("site name mismatch between RDA.reference and Reference")
     }
 
-    if (ncol(RDA.reference)>(1/2*ncol(Reference))){
-      RDA.reference<-RDA.reference[,colSums(RDA.reference[1:nrow(Reference),])!=0]
-      rda.pca<-prcomp(RDA.reference,center = TRUE, scale = T)
-      sig<-length(which(cumsum(eigenvals(rda.pca)/sum(eigenvals(rda.pca)))<0.95))
-      RDA.reference<-rda.pca$x[,1:sig]
+    if (ncol(RDA.reference)>(ncol(Reference)-1)){
+      stop("Too many metrics for number of environmental variables")
+      #RDA.reference<-RDA.reference[,colSums(RDA.reference[1:nrow(Reference),])!=0]
+      #rda.pca<-prcomp(RDA.reference,center = TRUE, scale = T)
+      #sig<-length(which(cumsum(eigenvals(rda.pca)/sum(eigenvals(rda.pca)))<0.95))
+      #RDA.reference<-rda.pca$x[,1:sig]
 
-    } else {
-      RDA.reference<-scale(RDA.reference,T,T)[,]
-      RDA.reference[is.nan(RDA.reference)]<-0
-      RDA.reference<-RDA.reference[,colSums(RDA.reference[1:nrow(Reference),])!=0]
     }
+    
+    if (ncol(RDA.reference)>(nrow(Reference-1))){
+      stop("Too many metrics selected for number of Reference Sites")
+    }
+    
+    if (ncol(RDA.reference)>((1/2)*nrow(Reference-1))){
+      warning("Number of indicator metrics greater than 1/2 number of reference sites")
+    }
+    
+    RDA.reference<-scale(RDA.reference,T,T)[,]
+    RDA.reference[is.nan(RDA.reference)]<-0
+    RDA.reference<-RDA.reference[,colSums(RDA.reference[1:nrow(Reference),])!=0]
 
     anna.ref<-rda(scale(Reference,T,T)[,],RDA.reference,scale=F)
 

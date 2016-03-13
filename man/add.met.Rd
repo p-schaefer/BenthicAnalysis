@@ -23,19 +23,20 @@ data(YKEnvData,envir = environment()) #Biological dataset
 data(YKBioData,envir = environment()) #Environmental dataset
 
 #Calculate indicator metrics from raw biological data
-bio.data.test<-benth.met(YKBioData,2,2)
-
-#Extract just the summary metrics
-bio.data<-bio.data.test$Summary.Metrics
+bio.data.test<-benth.met(bio.data.yk1,2,2)
 
 #standardize row names between datasets
-rownames(YKEnvData)<-bio.data.test$Site.List
+rownames(env.data.yk)<-rownames(bio.data.test$Site.List)
 
 #Match a test site (#201) to the nearest neighbour reference set
-nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
+nn.sites<-site.match(env.data.yk[201,],env.data.yk[1:118,],k=F,adaptive=T)
 
-#Calculate additional metrics based on selected Reference sites
-add.met(Test=bio.data.test$Raw.Data[201,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
+#Extract the raw taxa data for additional metric calculation
+taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data[i,]),])
+
+#Calculate additional metrics based on nearest neighbour reference sites
+additional.metrics<-add.met(Test=bio.data.test$Raw.Data[rownames(bio.data[201,]),],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
+additional.metrics
 }
 \keyword{Benthic}
 \keyword{Metrics}

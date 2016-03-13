@@ -1,13 +1,13 @@
 
-
 if (F){
-  user.k<-NULL
-  user.adaptve<-TRUE
-  user.outlier<-TRUE
-  user.nn.method<-"ANNA"
-  user.metrics<-NULL
-  user.m.select<-TRUE
-  user.distance<-TRUE
+  user.k<-100
+  user.adaptve<-F
+  user.outlier<-T
+  #user.nn.method<-"ANNA"
+  #user.metrics<-NULL
+  user.m.select<-F
+  user.distance<-F
+  user.rank<-F
   
   results<-NULL
   accuracy<-NULL
@@ -40,6 +40,7 @@ if (F){
     input.env<-input.env[,-c(1)]
     
     if (y=="YK"){
+      
       rownames(input.env)<-rownames(bio.data)
       results$YK<-data.frame(matrix(nrow=length(which(x==0)),ncol=16))
       rownames(results$YK)<-rownames(input.env)[which(x==0)]
@@ -52,31 +53,34 @@ if (F){
       colnames(accuracy$YK)<-c("Possibly Impaired/Impaired","Impaired")
       
       for (i in which(x==0)) {
-        nn.sites<-site.match(Test=input.env[i,],Reference=input.env[which(x==1),],k=user.k,adaptive=user.adaptve)
+        nn.sites<-site.match(Test=input.env[i,],Reference=input.env[which(x==1),],k=user.k,adaptive=user.adaptve)#,RDA.reference=bio.data.test$Summary.Metrics[which(x==1),c(1,2,4,14)])
         taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data[i,]),])
-        met.data<-add.met(Test=bio.data.test$Raw.Data[i,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
-        tsa.results<-tsa.test(Test=met.data[nrow(met.data),],
+        met.data<-add.met(Test=bio.data.test$Raw.Data[i,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])[,c(1,2,4,27)]#[,-c(12,13,25,26)]#
+        #met.data<-rbind(bio.data.test$Summary.Metrics[names(nn.sites$final.dist),c(1,2,4,14)],bio.data.test$Summary.Metrics[i,c(1,2,4,14)])
+        tsa.results<-try(tsa.test(Test=met.data[nrow(met.data),],
                                   Reference=met.data[1:(nrow(met.data)-1),],
-                                  distance=nn.sites$final.dist, outlier.rem=user.outlier, m.select=user.m.select)
-        
+                                  distance= if (user.distance) {nn.sites$final.dist} else {NULL}, outlier.rem=user.outlier, m.select=user.m.select, rank=user.rank),T)
+        if (is(tsa.results,"try-error")){
+          next
+        }
         #conf<-tsa.conf(match.object=nn.sites,tsa.object=tsa.results,Reference=NULL,benth.metric=bio.data.test,levels=c(1,5,10,20,30,40),reps=100)
         
-        results$YK[i,]<-c(tsa.results$tsa.results[1,],tsa.results$tsa.results[2,],tsa.results$tsa.results[3,],tsa.results$tsa.results[4,],
+        results$YK[(i-118),]<-c(tsa.results$tsa.results[1,],tsa.results$tsa.results[2,],tsa.results$tsa.results[3,],tsa.results$tsa.results[4,],
                        tsa.results$tsa.results[5,],tsa.results$tsa.results[6,],tsa.results$tsa.results[7,],tsa.results$tsa.results[8,],
                        tsa.results$tsa.results[9,],tsa.results$general.results[5,],tsa.results$general.results[6,],nn.sites$method,
                        tsa.results$jacknife[1,],tsa.results$general.results[3,],tsa.results$general.results[4,],tsa.results$general.results[2,])
-        print(i)
+        #print(i)
       }
       accuracy$YK[1,1]<-(length(which(results$YK[grep("D0",rownames(results$YK)),1]=="Possibly Impaired"|results$YK[grep("D0",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D0",rownames(results$YK)),1]))
       accuracy$YK[2,1]<-(length(which(results$YK[grep("D1",rownames(results$YK)),1]=="Possibly Impaired"|results$YK[grep("D1",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D1",rownames(results$YK)),1]))
       accuracy$YK[3,1]<-(length(which(results$YK[grep("D2",rownames(results$YK)),1]=="Possibly Impaired"|results$YK[grep("D2",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D2",rownames(results$YK)),1]))
       accuracy$YK[4,1]<-(length(which(results$YK[grep("D3",rownames(results$YK)),1]=="Possibly Impaired"|results$YK[grep("D3",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D3",rownames(results$YK)),1]))
       
-      accuracy$YK[1,2]<-print(length(which(results$YK[grep("D0",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D0",rownames(results$YK)),1]))
-      accuracy$YK[2,2]<-print(length(which(results$YK[grep("D1",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D1",rownames(results$YK)),1]))
-      accuracy$YK[3,2]<-print(length(which(results$YK[grep("D2",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D2",rownames(results$YK)),1]))
-      accuracy$YK[4,2]<-print(length(which(results$YK[grep("D3",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D3",rownames(results$YK)),1]))
-      
+      accuracy$YK[1,2]<-(length(which(results$YK[grep("D0",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D0",rownames(results$YK)),1]))
+      accuracy$YK[2,2]<-(length(which(results$YK[grep("D1",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D1",rownames(results$YK)),1]))
+      accuracy$YK[3,2]<-(length(which(results$YK[grep("D2",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D2",rownames(results$YK)),1]))
+      accuracy$YK[4,2]<-(length(which(results$YK[grep("D3",rownames(results$YK)),1]=="Impaired")==T)/length(results$YK[grep("D3",rownames(results$YK)),1]))
+      accuracy
     }
     
     
@@ -94,10 +98,10 @@ if (F){
       for (i in which(x==0)) {
         nn.sites<-site.match(Test=input.env[i,],Reference=input.env[which(x==1),],k=user.k,adaptive=user.adaptve, RDA.reference=NULL)
         taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data[i,]),])
-        met.data<-add.met(Test=bio.data.test$Raw.Data[i,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
+        met.data<-add.met(Test=bio.data.test$Raw.Data[i,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])[,-c(12,13,25,26)]#[,c(1,2,4,27)]#
         tsa.results<-tsa.test(Test=met.data[nrow(met.data),],
                               Reference=met.data[1:(nrow(met.data)-1),],
-                              distance=nn.sites$final.dist, outlier.rem=user.outlier, m.select=user.m.select)
+                              distance=if (user.distance) {nn.sites$final.dist} else {NULL}, outlier.rem=user.outlier, m.select=user.m.select)
         
         #conf<-tsa.conf(match.object=nn.sites,tsa.object=tsa.results,Reference=NULL,benth.metric=bio.data.test,levels=c(1,5,10,20,30,40),reps=100)
         
@@ -112,10 +116,10 @@ if (F){
       accuracy$GL[3,1]<-(length(which(results$GL[grep("D2",rownames(results$GL)),1]=="Possibly Impaired"|results$GL[grep("D2",rownames(results$GL)),1]=="Impaired")==T)/length(results$GL[grep("D2",rownames(results$GL)),1]))
       accuracy$GL[4,1]<-(length(which(results$GL[grep("D3",rownames(results$GL)),1]=="Possibly Impaired"|results$GL[grep("D3",rownames(results$GL)),1]=="Impaired")==T)/length(results$GL[grep("D3",rownames(results$GL)),1]))
       
-      accuracy$GL[1,2]<-print(length(which(results$GL[grep("D0",rownames(results$GL)),1]=="Impaired")==T)/length(results$GL[grep("D0",rownames(results$GL)),1]))
-      accuracy$GL[2,2]<-print(length(which(results$GL[grep("D1",rownames(results$GL)),1]=="Impaired")==T)/length(results$GL[grep("D1",rownames(results$GL)),1]))
-      accuracy$GL[3,2]<-print(length(which(results$GL[grep("D2",rownames(results$GL)),1]=="Impaired")==T)/length(results$GL[grep("D2",rownames(results$GL)),1]))
-      accuracy$GL[4,2]<-print(length(which(results$GL[grep("D3",rownames(results$GL)),1]=="Impaired")==T)/length(results$GL[grep("D3",rownames(results$GL)),1]))
+      accuracy$GL[1,2]<-(length(which(results$GL[grep("D0",rownames(results$GL)),1]=="Impaired")==T)/length(results$GL[grep("D0",rownames(results$GL)),1]))
+      accuracy$GL[2,2]<-(length(which(results$GL[grep("D1",rownames(results$GL)),1]=="Impaired")==T)/length(results$GL[grep("D1",rownames(results$GL)),1]))
+      accuracy$GL[3,2]<-(length(which(results$GL[grep("D2",rownames(results$GL)),1]=="Impaired")==T)/length(results$GL[grep("D2",rownames(results$GL)),1]))
+      accuracy$GL[4,2]<-(length(which(results$GL[grep("D3",rownames(results$GL)),1]=="Impaired")==T)/length(results$GL[grep("D3",rownames(results$GL)),1]))
       
     }
     
@@ -133,35 +137,37 @@ if (F){
       colnames(accuracy$ACT)<-c("Possibly Impaired/Impaired","Impaired")
       
       for (i in which(x==0)) {
-        nn.sites<-site.match(Test=input.env[i,],Reference=input.env[which(x==1),],k=user.k,adaptive=user.adaptve)
+        nn.sites<-site.match(Test=input.env[i,],Reference=input.env[which(x==1),],k=user.k,adaptive=user.adaptve)#,RDA.reference=bio.data.test$Summary.Metrics[which(x==1),c(1,2,4,14)])
         taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data[i,]),])
-        met.data<-add.met(Test=bio.data.test$Raw.Data[i,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
-        tsa.results<-tsa.test(Test=met.data[nrow(met.data),],
-                              Reference=met.data[1:(nrow(met.data)-1),],
-                              distance=nn.sites$final.dist, outlier.rem=user.outlier, m.select=user.m.select)
-        
+        met.data<-add.met(Test=bio.data.test$Raw.Data[i,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])[,-c(12,13,25,26)]#[,c(1,2,4,27)]#
+        #met.data<-rbind(bio.data.test$Summary.Metrics[names(nn.sites$final.dist),c(1,2,4,14)],bio.data.test$Summary.Metrics[i,c(1,2,4,14)])
+        tsa.results<-try(tsa.test(Test=met.data[nrow(met.data),],
+                                  Reference=met.data[1:(nrow(met.data)-1),],
+                                  distance= if (user.distance) {nn.sites$final.dist} else {NULL}, outlier.rem=user.outlier, m.select=user.m.select, rank=user.rank),T)
+        if (is(tsa.results,"try-error")){
+          next
+        }
         #conf<-tsa.conf(match.object=nn.sites,tsa.object=tsa.results,Reference=NULL,benth.metric=bio.data.test,levels=c(1,5,10,20,30,40),reps=100)
         
-        results$ACT[i,]<-c(tsa.results$tsa.results[1,],tsa.results$tsa.results[2,],tsa.results$tsa.results[3,],tsa.results$tsa.results[4,],
+        results$ACT[(i-87),]<-c(tsa.results$tsa.results[1,],tsa.results$tsa.results[2,],tsa.results$tsa.results[3,],tsa.results$tsa.results[4,],
                           tsa.results$tsa.results[5,],tsa.results$tsa.results[6,],tsa.results$tsa.results[7,],tsa.results$tsa.results[8,],
                           tsa.results$tsa.results[9,],tsa.results$general.results[5,],tsa.results$general.results[6,],nn.sites$method,
                           tsa.results$jacknife[1,],tsa.results$general.results[3,],tsa.results$general.results[4,],tsa.results$general.results[2,])
-        print(i)
+        #print(i)
       }
       accuracy$ACT[1,1]<-(length(which(results$ACT[grep("D0",rownames(results$ACT)),1]=="Possibly Impaired"|results$ACT[grep("D0",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D0",rownames(results$ACT)),1]))
       accuracy$ACT[2,1]<-(length(which(results$ACT[grep("D1",rownames(results$ACT)),1]=="Possibly Impaired"|results$ACT[grep("D1",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D1",rownames(results$ACT)),1]))
       accuracy$ACT[3,1]<-(length(which(results$ACT[grep("D2",rownames(results$ACT)),1]=="Possibly Impaired"|results$ACT[grep("D2",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D2",rownames(results$ACT)),1]))
       accuracy$ACT[4,1]<-(length(which(results$ACT[grep("D3",rownames(results$ACT)),1]=="Possibly Impaired"|results$ACT[grep("D3",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D3",rownames(results$ACT)),1]))
       
-      accuracy$ACT[1,2]<-print(length(which(results$ACT[grep("D0",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D0",rownames(results$ACT)),1]))
-      accuracy$ACT[2,2]<-print(length(which(results$ACT[grep("D1",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D1",rownames(results$ACT)),1]))
-      accuracy$ACT[3,2]<-print(length(which(results$ACT[grep("D2",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D2",rownames(results$ACT)),1]))
-      accuracy$ACT[4,2]<-print(length(which(results$ACT[grep("D3",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D3",rownames(results$ACT)),1]))
+      accuracy$ACT[1,2]<-(length(which(results$ACT[grep("D0",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D0",rownames(results$ACT)),1]))
+      accuracy$ACT[2,2]<-(length(which(results$ACT[grep("D1",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D1",rownames(results$ACT)),1]))
+      accuracy$ACT[3,2]<-(length(which(results$ACT[grep("D2",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D2",rownames(results$ACT)),1]))
+      accuracy$ACT[4,2]<-(length(which(results$ACT[grep("D3",rownames(results$ACT)),1]=="Impaired")==T)/length(results$ACT[grep("D3",rownames(results$ACT)),1]))
       
     }
     
   }
-  
 }
 
   
