@@ -147,7 +147,7 @@ shinyServer(function(input, output, session) {
     if (any(apply(x[-c(1),],1,function(x) any(duplicated(unlist(x[which(x!="")]))==T))==T)) {
       stop("Duplicate Reference sample names detected for one or more test samples")
     } 
-    if (any(apply(x,1,function(x) any(duplicated(unlist(x[which(x!="")]))==T))==T)|any(d2[,1]%in%unlist(d2[,-c(1)])==T)) {
+    if (any(apply(x,1,function(x) any(duplicated(unlist(x[which(x!="")]))==T))==T)|any(x[,1]%in%unlist(x[,-c(1)])==T)) {
       stop("A sample cannot be classified as both test and reference")
     } else {
       x
@@ -608,7 +608,7 @@ shinyServer(function(input, output, session) {
                             Reference=taxa.data[1:length(nn.sites()$final.dist),sel.mets()],
                             distance= if (distance()) nn.sites()$final.dist else NULL,
                             outlier.rem= outlier.rem(),
-                            m.select= m.select())
+                            m.select= F)
       tsa.results
     }
   })
@@ -1061,7 +1061,7 @@ shinyServer(function(input, output, session) {
                                      Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
                                      k= if (ab.k!=0 & ab.k<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) ab.k else NULL,
                                      adaptive=ab.adaptive,
-                                     RDA.reference = if (isolate(input$nnmethod.user=="RDA-ANNA")) {bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),ab.sel.mets]} else {NULL}),
+                                     RDA.reference = if (isolate(input$nnmethod.user=="RDA-ANNA") & ab.distance==T) bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),ab.sel.mets] else NULL),
                               silent=T)
                 if(is(nn.sites,"try-error")){
                   results[i,1]<-nn.sites[1]
@@ -1078,6 +1078,7 @@ shinyServer(function(input, output, session) {
                 nn.sites$method<-"User Selected"
                 nn.sites$method1<-NULL
                 nn.sites$method1<-"User Selected"
+                class(nn.sites)<-"match.object"
                 nn.sites
                 
               }
@@ -1093,10 +1094,9 @@ shinyServer(function(input, output, session) {
               if(is(tsa.results,"try-error")){
                 results[i,1]<-tsa.results[1]
                 next
-              } else {
-              }
+              } 
             } else {
-              taxa.data<-rbind(bio.data()$Summary.Metrics.Data[names(nn.sites$final.dist),],bio.data()$Summary.Metrics[i,])
+              taxa.data<-rbind(bio.data()$Summary.Metrics[names(nn.sites$final.dist),],bio.data()$Summary.Metrics[i,])
               tsa.results<-try(tsa.test(Test=taxa.data[(1+length(nn.sites$final.dist)),ab.sel.mets],
                                     Reference=taxa.data[1:length(nn.sites$final.dist),ab.sel.mets],
                                     distance= if (ab.distance) nn.sites$final.dist else NULL,
@@ -1135,50 +1135,50 @@ shinyServer(function(input, output, session) {
                 dev.off()
               }
               if (isolate(input$ab.tsabox.plot)){
-                if (input$metdata==T){
-                  jpeg(filename=paste0(sel.dir(),"/TSA Boxplot/",i,"-tsabox.jpeg"),width=640,height=480)
-                  boxplottsa(tsa.results)
-                  dev.off()
-                } 
                 if (input$metdata==F){
                   tsa.stand<-tsa.zscore(Test=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[(1+length(nn.sites$final.dist)),],
                                         Reference=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[1:length(nn.sites$final.dist),])
-                  nInd<-ncol(tsa.stand)
-                  nRef<-nrow(tsa.stand)-1
-                  part.tsa<-if (!is.null(tsa.results$partial.tsa)) {tsa.results$partial.tsa} else {NULL}
-                  all.met<-colnames(tsa.stand)
-                  sel.met<-unlist(strsplit(substr(tsa.results$general.results["Selected Indicator Metrics",],1,(nchar(tsa.results$general.results["Selected Indicator Metrics",])-2)),split=", "))
-                  
-                  cols<-colorRampPalette(brewer.pal(12, "Paired"))(nInd)
-                  text<-paste(seq(1:ncol(tsa.stand)),colnames(tsa.stand),sep=".")
-                  b1<-ceiling(length(text)/3)
-                  b2<-ceiling(length(text)*2/3)
-
-                  l<-rbind(c(1,1,1),c(1,1,1),c(2,3,4))
-                  jpeg(filename=paste0(sel.dir(),"/TSA Boxplot/",i,"-tsabox.jpeg"),width=640,height=480)
-                  
-                  layout(l)
-                  
-                  par(mar = c(1.9,0.8,1.2,0.8))
-                  boxplot(tsa.stand[1:nRef,],col=cols,outline=F,yaxt="n",ylim=c(min(tsa.stand)*1.3,max(tsa.stand)*1.1),names=seq(1:nInd),cex.axis=1.2,main="")
-                  title(main=paste0(rownames(tsa.stand)[(nRef+1)]," Boxplot"),cex=1.5)
-                  points(seq(1:nInd),tsa.stand[(nRef+1),],col="red",pch=19,cex=1)
-                  
-                  points(which(colnames(tsa.stand)%in%sel.met),tsa.stand[nrow(tsa.stand),sel.met],col="black",pch="O",cex=1.75)#This line circles points that are used in analysis
-                  if (any(part.tsa$p<0.05)) {
-                    points(which(colnames(tsa.stand)%in%rownames(part.tsa)[part.tsa$p<0.05]),rep((min(tsa.stand)*1.2),length(rownames(part.tsa)[part.tsa$p<0.05])),col="red",pch="*",cex=2)
-                  }
-                  par(mar = c(0,0,0,0))
-                  plot(1, type="n", axes=F, xlab="", ylab="")
-                  legend("center",text[1:b1],cex=1.25,fill=cols[1:b1],bty="n",x.intersp=1,y.intersp=1)
-                  par(mar = c(0,0,0,0))
-                  plot(1, type="n", axes=F, xlab="", ylab="")
-                  legend("center",text[(b1+1):b2],cex=1.25,fill=cols[(b1+1):b2],bty="n",x.intersp=1,y.intersp=1)
-                  par(mar = c(0,0,0,0))
-                  plot(1, type="n", axes=F, xlab="", ylab="")
-                  legend("center",text[(b2+1):length(text)],cex=1.25,fill=cols[(b2+1):length(text)],bty="n",x.intersp=1,y.intersp=1)
-                  dev.off()
+                } else {
+                  taxa.data<-rbind(bio.data()$Summary.Metrics[names(nn.sites$final.dist),],bio.data()$Summary.Metrics[i,])
+                  tsa.stand<-tsa.zscore(Test=taxa.data[(1+length(nn.sites$final.dist)),ab.sel.mets],
+                                        Reference=taxa.data[1:length(nn.sites$final.dist),ab.sel.mets])
                 }
+                nInd<-ncol(tsa.stand)
+                nRef<-nrow(tsa.stand)-1
+                part.tsa<-if (!is.null(tsa.results$partial.tsa)) {tsa.results$partial.tsa} else {NULL}
+                all.met<-colnames(tsa.stand)
+                sel.met<-unlist(strsplit(substr(tsa.results$general.results["Selected Indicator Metrics",],1,(nchar(tsa.results$general.results["Selected Indicator Metrics",])-2)),split=", "))
+                
+                cols<-colorRampPalette(brewer.pal(12, "Paired"))(nInd)
+                text<-paste(seq(1:ncol(tsa.stand)),colnames(tsa.stand),sep=".")
+                b1<-ceiling(length(text)/3)
+                b2<-ceiling(length(text)*2/3)
+                
+                l<-rbind(c(1,1,1),c(1,1,1),c(2,3,4))
+                jpeg(filename=paste0(sel.dir(),"/TSA Boxplot/",i,"-tsabox.jpeg"),width=640,height=480)
+                
+                layout(l)
+                
+                par(mar = c(1.9,0.8,1.2,0.8))
+                boxplot(tsa.stand[1:nRef,],col=cols,outline=F,yaxt="n",ylim=c(min(tsa.stand)*1.3,max(tsa.stand)*1.1),names=seq(1:nInd),cex.axis=1.2,main="")
+                title(main=paste0(rownames(tsa.stand)[(nRef+1)]," Boxplot"),cex=1.5)
+                points(seq(1:nInd),tsa.stand[(nRef+1),],col="red",pch=19,cex=1)
+                
+                points(which(colnames(tsa.stand)%in%sel.met),tsa.stand[nrow(tsa.stand),sel.met],col="black",pch="O",cex=1.75)#This line circles points that are used in analysis
+                if (any(part.tsa$p<0.05)) {
+                  points(which(colnames(tsa.stand)%in%rownames(part.tsa)[part.tsa$p<0.05]),rep((min(tsa.stand)*1.2),length(rownames(part.tsa)[part.tsa$p<0.05])),col="red",pch="*",cex=2)
+                }
+                par(mar = c(0,0,0,0))
+                plot(1, type="n", axes=F, xlab="", ylab="")
+                legend("center",text[1:b1],cex=1.25,fill=cols[1:b1],bty="n",x.intersp=1,y.intersp=1)
+                par(mar = c(0,0,0,0))
+                plot(1, type="n", axes=F, xlab="", ylab="")
+                legend("center",text[(b1+1):b2],cex=1.25,fill=cols[(b1+1):b2],bty="n",x.intersp=1,y.intersp=1)
+                par(mar = c(0,0,0,0))
+                plot(1, type="n", axes=F, xlab="", ylab="")
+                legend("center",text[(b2+1):length(text)],cex=1.25,fill=cols[(b2+1):length(text)],bty="n",x.intersp=1,y.intersp=1)
+                dev.off()
+                
               }
               if (isolate(input$ab.tsascatter.plot)){
                 jpeg(filename=paste0(sel.dir(),"/TSA Ordination/",i,"-tsaord.jpeg"),width=640,height=480)
@@ -1221,41 +1221,43 @@ shinyServer(function(input, output, session) {
                 par(mar = c(0,0,0,0))
                 textplot(txt,halign="left", valign="top")
 
-                if (input$metdata==T){
-                  boxplottsa(tsa.results)
-                } else {
+                if (input$metdata==F){
                   tsa.stand<-tsa.zscore(Test=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[(1+length(nn.sites$final.dist)),],
                                         Reference=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[1:length(nn.sites$final.dist),])
-                  nInd<-ncol(tsa.stand)
-                  nRef<-nrow(tsa.stand)-1
-                  part.tsa<-if (!is.null(tsa.results$partial.tsa)) {tsa.results$partial.tsa} else {NULL}
-                  all.met<-colnames(tsa.stand)
-                  sel.met<-unlist(strsplit(substr(tsa.results$general.results["Selected Indicator Metrics",],1,(nchar(tsa.results$general.results["Selected Indicator Metrics",])-2)),split=", "))
-                  
-                  cols<-colorRampPalette(brewer.pal(12, "Paired"))(nInd)
-                  text<-paste(seq(1:ncol(tsa.stand)),colnames(tsa.stand),sep=".")
-                  b1<-ceiling(length(text)/3)
-                  b2<-ceiling(length(text)*2/3)
-                  
-                  par(mar = c(1.9,0.8,1.2,0.8))
-                  boxplot(tsa.stand[1:nRef,],col=cols,outline=F,yaxt="n",ylim=c(min(tsa.stand)*1.3,max(tsa.stand)*1.1),names=seq(1:nInd),cex.axis=1.2,main="")
-                  title(main=paste0(rownames(tsa.stand)[(nRef+1)]," Boxplot"),cex=1.5)
-                  points(seq(1:nInd),tsa.stand[(nRef+1),],col="red",pch=19,cex=1)
-                  
-                  points(which(colnames(tsa.stand)%in%sel.met),tsa.stand[nrow(tsa.stand),sel.met],col="black",pch="O",cex=1.75)#This line circles points that are used in analysis
-                  if (any(part.tsa$p<0.05)) {
-                    points(which(colnames(tsa.stand)%in%rownames(part.tsa)[part.tsa$p<0.05]),rep((min(tsa.stand)*1.2),length(rownames(part.tsa)[part.tsa$p<0.05])),col="red",pch="*",cex=2)
-                  }
-                  par(mar = c(0,0,0,0))
-                  plot(1, type="n", axes=F, xlab="", ylab="")
-                  legend("center",text[1:b1],cex=1,fill=cols[1:b1],bty="n",x.intersp=0.85,y.intersp=0.85)
-                  par(mar = c(0,0,0,0))
-                  plot(1, type="n", axes=F, xlab="", ylab="")
-                  legend("center",text[(b1+1):b2],cex=1,fill=cols[(b1+1):b2],bty="n",x.intersp=0.85,y.intersp=0.85)
-                  par(mar = c(0,0,0,0))
-                  plot(1, type="n", axes=F, xlab="", ylab="")
-                  legend("center",text[(b2+1):length(text)],cex=1,fill=cols[(b2+1):length(text)],bty="n",x.intersp=0.85,y.intersp=0.85)
+                } else {
+                  taxa.data<-rbind(bio.data()$Summary.Metrics[names(nn.sites$final.dist),],bio.data()$Summary.Metrics[i,])
+                  tsa.stand<-tsa.zscore(Test=taxa.data[(1+length(nn.sites$final.dist)),ab.sel.mets],
+                                        Reference=taxa.data[1:length(nn.sites$final.dist),ab.sel.mets])
                 }
+                nInd<-ncol(tsa.stand)
+                nRef<-nrow(tsa.stand)-1
+                part.tsa<-if (!is.null(tsa.results$partial.tsa)) {tsa.results$partial.tsa} else {NULL}
+                all.met<-colnames(tsa.stand)
+                sel.met<-unlist(strsplit(substr(tsa.results$general.results["Selected Indicator Metrics",],1,(nchar(tsa.results$general.results["Selected Indicator Metrics",])-2)),split=", "))
+                
+                cols<-colorRampPalette(brewer.pal(12, "Paired"))(nInd)
+                text<-paste(seq(1:ncol(tsa.stand)),colnames(tsa.stand),sep=".")
+                b1<-ceiling(length(text)/3)
+                b2<-ceiling(length(text)*2/3)
+                
+                par(mar = c(1.9,0.8,1.2,0.8))
+                boxplot(tsa.stand[1:nRef,],col=cols,outline=F,yaxt="n",ylim=c(min(tsa.stand)*1.3,max(tsa.stand)*1.1),names=seq(1:nInd),cex.axis=1.2,main="")
+                title(main=paste0(rownames(tsa.stand)[(nRef+1)]," Boxplot"),cex=1.5)
+                points(seq(1:nInd),tsa.stand[(nRef+1),],col="red",pch=19,cex=1)
+                
+                points(which(colnames(tsa.stand)%in%sel.met),tsa.stand[nrow(tsa.stand),sel.met],col="black",pch="O",cex=1.75)#This line circles points that are used in analysis
+                if (any(part.tsa$p<0.05)) {
+                  points(which(colnames(tsa.stand)%in%rownames(part.tsa)[part.tsa$p<0.05]),rep((min(tsa.stand)*1.2),length(rownames(part.tsa)[part.tsa$p<0.05])),col="red",pch="*",cex=2)
+                }
+                par(mar = c(0,0,0,0))
+                plot(1, type="n", axes=F, xlab="", ylab="")
+                legend("center",text[1:b1],cex=1,fill=cols[1:b1],bty="n",x.intersp=0.85,y.intersp=0.85)
+                par(mar = c(0,0,0,0))
+                plot(1, type="n", axes=F, xlab="", ylab="")
+                legend("center",text[(b1+1):b2],cex=1,fill=cols[(b1+1):b2],bty="n",x.intersp=0.85,y.intersp=0.85)
+                par(mar = c(0,0,0,0))
+                plot(1, type="n", axes=F, xlab="", ylab="")
+                legend("center",text[(b2+1):length(text)],cex=1,fill=cols[(b2+1):length(text)],bty="n",x.intersp=0.85,y.intersp=0.85)
                 
                 if (isolate(input$multiplot1.sel=="None")){
                   plot(1, type="n", axes=F, xlab="", ylab="")
