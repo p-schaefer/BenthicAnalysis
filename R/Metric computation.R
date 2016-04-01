@@ -50,13 +50,13 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
   taxa.intol<-taxa[,taxa.names[grep(grep.paste(HBI[which(HBI[,2]<5),1]),taxa.names)]]
   n.taxa<-ncol(taxa)
 
-  summ<-data.frame(matrix(nrow=nrow(taxa),ncol=26))
+  summ<-data.frame(matrix(nrow=nrow(taxa),ncol=27))
   rownames(summ)<-rownames(taxa)
   colnames(summ)<-c("Richness","Simpson","Shannon",
                     "Percent Dominance","Percent Oligochaeta",
                     "Percent Chironomidae","Percent Isopoda","Percent Amphipoda",
 
-                    "Percent Coleoptera", "Trich as Hydropsychidae","Ephem as Baetidae",
+                    "Percent Coleoptera", "Coleo as Elmidae", "Trich as Hydropsychidae","Ephem as Baetidae",
                     "Intolerants Richness","Percent Intolerants",
 
                     "Percent EPT","EPT Richness",
@@ -75,27 +75,29 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
   summ[,7]<-log((adapt.sum(taxa[,grep("Isopoda",colnames(taxa))])/rowSums(taxa))+1)
   summ[,8]<-log((adapt.sum(taxa[,grep("Amphipoda",colnames(taxa))])/rowSums(taxa))+1)
   summ[,9]<-adapt.sum(taxa[,grep("Coleoptera",colnames(taxa))])/rowSums((taxa))
-  summ[,10]<-adapt.sum(taxa[,grep("Hydropsychidae",colnames(taxa))])/adapt.sum(taxa[,grep("Trichoptera",colnames(taxa))])
-  summ[,11]<-adapt.sum(taxa[,grep("Baetidae",colnames(taxa))])/adapt.sum(taxa[,grep("Ephemeroptera",colnames(taxa))])
+  summ[,10]<-adapt.sum(taxa[,grep("Elmidae",colnames(taxa))])/adapt.sum(taxa[,grep("Coleoptera",colnames(taxa))])
+  
+  summ[,11]<-adapt.sum(taxa[,grep("Hydropsychidae",colnames(taxa))])/adapt.sum(taxa[,grep("Trichoptera",colnames(taxa))])
+  summ[,12]<-adapt.sum(taxa[,grep("Baetidae",colnames(taxa))])/adapt.sum(taxa[,grep("Ephemeroptera",colnames(taxa))])
 
-  summ[,12]<-apply(taxa.intol, 1, function(x) length(which(x>0)))
-  summ[,13]<-adapt.sum(taxa.intol)/rowSums(taxa)
+  summ[,13]<-apply(taxa.intol, 1, function(x) length(which(x>0)))
+  summ[,14]<-adapt.sum(taxa.intol)/rowSums(taxa)
 
-  summ[,14]<-adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])/rowSums(taxa)
-  summ[,15]<-adapt.sum(taxa.pa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa.pa))])
-  summ[,16]<-adapt.sum(taxa.pa[,grep("Ephemeroptera",colnames(taxa.pa))])
-  summ[,17]<-adapt.sum(taxa[,grep("Ephemeroptera",colnames(taxa))])/rowSums(taxa)
-  summ[,18]<-adapt.sum(taxa.pa[,grep("Plecoptera",colnames(taxa.pa))])
-  summ[,19]<-adapt.sum(taxa[,grep("Plecoptera",colnames(taxa))])/rowSums(taxa)
-  summ[,20]<-adapt.sum(taxa.pa[,grep("Trichoptera",colnames(taxa.pa))])
-  summ[,21]<-adapt.sum(taxa[,grep("Trichoptera",colnames(taxa))])/rowSums(taxa)
+  summ[,15]<-adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])/rowSums(taxa)
+  summ[,16]<-adapt.sum(taxa.pa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa.pa))])
+  summ[,17]<-adapt.sum(taxa.pa[,grep("Ephemeroptera",colnames(taxa.pa))])
+  summ[,18]<-adapt.sum(taxa[,grep("Ephemeroptera",colnames(taxa))])/rowSums(taxa)
+  summ[,19]<-adapt.sum(taxa.pa[,grep("Plecoptera",colnames(taxa.pa))])
+  summ[,20]<-adapt.sum(taxa[,grep("Plecoptera",colnames(taxa))])/rowSums(taxa)
+  summ[,21]<-adapt.sum(taxa.pa[,grep("Trichoptera",colnames(taxa.pa))])
+  summ[,22]<-adapt.sum(taxa[,grep("Trichoptera",colnames(taxa))])/rowSums(taxa)
 
-  summ[,22]<-adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])/
+  summ[,23]<-adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])/
     (adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])+
        adapt.sum(taxa[,grep("Chironomidae",colnames(taxa))]))
-  summ[,23]<-1-(adapt.sum(taxa[,grep("Chironomidae",colnames(taxa))])/adapt.sum(taxa[,grep(paste0("Diptera"),colnames(taxa))]))
+  summ[,24]<-1-(adapt.sum(taxa[,grep("Chironomidae",colnames(taxa))])/adapt.sum(taxa[,grep(paste0("Diptera"),colnames(taxa))]))
   
-  summ[,24]<-adapt.sum(taxa[,grep("Corixidae|Hirudinea|Isopoda|Gastropoda",colnames(taxa))])/rowSums(taxa)
+  summ[,25]<-adapt.sum(taxa[,grep("Corixidae|Hirudinea|Isopoda|Gastropoda",colnames(taxa))])/rowSums(taxa)
 
   if (tax.fields==2) {
     taxa.hbi<-taxa[,taxa.names[grep(grep.paste(HBI[,1]),taxa.names)]]
@@ -105,7 +107,7 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
       t2<-lapply(taxa.names[grep(grep.paste(t1[which(is.na(t3))]),taxa.names)], function(x) substr(x, stop=(gregexpr(pattern =';',x)[[1]][1]-1),start=1))
       t3[is.na(t3)]<-match(t2,HBI[,1])
     }
-    summ[,25]<-apply(taxa.hbi,1,function(x) sum(x*HBI[t3, 2])/sum(x))
+    summ[,26]<-apply(taxa.hbi,1,function(x) sum(x*HBI[t3, 2])/sum(x))
   }
 
   taxa.rel.cefi<-taxa.rel
@@ -117,7 +119,7 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
     t2<-lapply(taxa.names[grep(grep.paste(t1[which(is.na(t3))]),taxa.names)], function(x) substr(x, stop=(gregexpr(pattern =';',x)[[1]][1]-1),start=1))
     t3[is.na(t3)]<-match(t2,HBI[,1])
   }
-  summ[,26]<-apply(taxa.rel.cefi,1,function(x) sum(x*CEFI[t3, 2]*CEFI[t3, 3])/sum(x*CEFI[t3, 3]))
+  summ[,27]<-apply(taxa.rel.cefi,1,function(x) sum(x*CEFI[t3, 2]*CEFI[t3, 3])/sum(x*CEFI[t3, 3]))
 
   summ[is.nan.data.frame(summ)]<-0
 
