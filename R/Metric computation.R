@@ -262,10 +262,10 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F) {
         "Percent Non Chir Dip" , "O:E", "Bray-Curtis","CA1","CA2")
 
   hb<-c("Percent Dominance","Percent Oligochaeta","Percent Chironomidae","Percent Isopoda","Percent Amphipoda","FBI",
-        "Trich as Hydropsychidae","Ephem as Baetidae","Percent Coleoptera","HBI", "Percent CIGH","CA1","CA2")
+        "Trich as Hydropsychidae","Ephem as Baetidae","Percent Coleoptera","HBI", "Percent CIGH","CA1","CA2", "Coleo as Elmidae")
 
   lg<-c("Percent Dominance","Percent Oligochaeta","Percent Chironomidae","Percent Isopoda","Percent Amphipoda","FBI",
-        "Trich as Hydropsychidae","Ephem as Baetidae","Percent Coleoptera", "HBI", "Percent CIGH","CA1","CA2")
+        "Trich as Hydropsychidae","Ephem as Baetidae","Percent Coleoptera", "HBI", "Percent CIGH","CA1","CA2", "Coleo as Elmidae")
 
   lb<-c("Richness","Simpson","Shannon","Intolerants Richness","Percent Intolerants","Percent EPT","EPT Richness","Ephem Richness",
         "Percent Ephem","Plec Richness","Percent Plec","Trich Richness","Percent Trich","EPT per EPT and Chir",
