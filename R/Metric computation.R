@@ -72,8 +72,8 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
   summ[,4]<-(apply(taxa, 1, max))/rowSums((taxa))
   summ[,5]<-adapt.sum(taxa[,grep(grep.paste(c("Oligochaetae","Oligochaeta","Oligochaete","Lumbriculida","Haplotaxida","Clitellata","Naidina")),colnames(taxa))])/rowSums(taxa)
   summ[,6]<-adapt.sum(taxa[,grep("Chironomidae",colnames(taxa))])/rowSums(taxa)
-  summ[,7]<-log((adapt.sum(taxa[,grep("Isopoda",colnames(taxa))])/rowSums(taxa))+1)
-  summ[,8]<-log((adapt.sum(taxa[,grep("Amphipoda",colnames(taxa))])/rowSums(taxa))+1)
+  summ[,7]<-adapt.sum(taxa[,grep("Isopoda",colnames(taxa))])/rowSums(taxa)
+  summ[,8]<-adapt.sum(taxa[,grep("Amphipoda",colnames(taxa))])/rowSums(taxa)
   summ[,9]<-adapt.sum(taxa[,grep("Coleoptera",colnames(taxa))])/rowSums((taxa))
   summ[,10]<-adapt.sum(taxa[,grep("Elmidae",colnames(taxa))])/adapt.sum(taxa[,grep("Coleoptera",colnames(taxa))])
   
