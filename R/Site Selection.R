@@ -65,6 +65,7 @@ site.match<-function(Test, Reference, k=NULL, adaptive=T, RDA.reference=NULL) {
     anna.test.x<-predict(anna.ref,Test)
     anna.test<-(anna.test.x - apply(anna.ref$x,2,min)) / (apply(anna.ref$x,2,max) - apply(anna.ref$x,2,min))
     anna.ref.x<-decostand(anna.ref$x,method="range")
+    sig<-min(sig, ncol(anna.ref.x))
     anna.dist<- sort(as.matrix(dist(rbind(sweep(sweep(anna.ref.x,2,anna.test,"-"),2, eigenvals(anna.ref)/sum(eigenvals(anna.ref)),"*")[,1:sig],rep(0,sig))))[,nrow(Reference)+1])
     anna.dist<-anna.dist[-c(1)]
   }
@@ -105,6 +106,7 @@ site.match<-function(Test, Reference, k=NULL, adaptive=T, RDA.reference=NULL) {
     anna.test.x<-predict(object=anna.ref,newdata=(Test-colMeans(Reference))/apply(Reference,2,sd),model="CCA",type="wa")
     anna.test<-(anna.test.x - apply(anna.ref$CCA$wa,2,min)) / (apply(anna.ref$CCA$wa,2,max) - apply(anna.ref$CCA$wa,2,min))
     anna.ref.x<-decostand(anna.ref$CCA$wa,method="range")
+    sig<-min(sig, ncol(anna.ref.x))
     anna.dist<-sort(as.matrix(dist(rbind(sweep(sweep(anna.ref.x,2,anna.test,"-"),2, anna.ref$CCA$eig/sum(anna.ref$CCA$eig),"*")[,1:sig],rep(0,sig))))[,nrow(Reference)+1])
     anna.dist<-anna.dist[-c(1)]
   }
