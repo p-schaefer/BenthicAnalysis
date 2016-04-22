@@ -50,7 +50,7 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
   taxa.intol<-taxa[,taxa.names[grep(grep.paste(HBI[which(HBI[,2]<5),1]),taxa.names)]]
   n.taxa<-ncol(taxa)
 
-  summ<-data.frame(matrix(nrow=nrow(taxa),ncol=27))
+  summ<-data.frame(matrix(nrow=nrow(taxa),ncol=34))
   rownames(summ)<-rownames(taxa)
   colnames(summ)<-c("Richness","Simpson","Shannon",
                     "Percent Dominance","Percent Oligochaeta",
@@ -63,10 +63,11 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
                     "Ephem Richness","Percent Ephem",
                     "Plec Richness","Percent Plec",
                     "Trich Richness","Percent Trich",
-                    "EPT per EPT and Chir","Percent Non Chir Dip","Percent CIGH","HBI","CEFI")
+                    "EPT per EPT and Chir","Percent Non Chir Dip","Percent CIGH","HBI","CEFI",
+                    "Percent Predator", "Percent Scraper", "Percent Shredder", "Percent Filter","Percent Gatherer",
+                    "Percent Clinger","Percent Burrower")
 
-
-  summ[,1]<-specnumber(taxa)
+  summ[,1]<-richness.calc(taxa)
   summ[,2]<-diversity(taxa,index="simpson")
   summ[,3]<-diversity(taxa,index="shannon")
   summ[,4]<-(apply(taxa, 1, max))/rowSums((taxa))
@@ -84,12 +85,12 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
   summ[,14]<-adapt.sum(taxa.intol)/rowSums(taxa)
 
   summ[,15]<-adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])/rowSums(taxa)
-  summ[,16]<-adapt.sum(taxa.pa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa.pa))])
-  summ[,17]<-adapt.sum(taxa.pa[,grep("Ephemeroptera",colnames(taxa.pa))])
+  summ[,16]<-richness.calc(taxa[,grep("Ephemeroptera|Plecoptera|Trichoptera",colnames(taxa))])
+  summ[,17]<-richness.calc(taxa[,grep("Ephemeroptera",colnames(taxa))])
   summ[,18]<-adapt.sum(taxa[,grep("Ephemeroptera",colnames(taxa))])/rowSums(taxa)
-  summ[,19]<-adapt.sum(taxa.pa[,grep("Plecoptera",colnames(taxa.pa))])
+  summ[,19]<-richness.calc(taxa[,grep("Plecoptera",colnames(taxa))])
   summ[,20]<-adapt.sum(taxa[,grep("Plecoptera",colnames(taxa))])/rowSums(taxa)
-  summ[,21]<-adapt.sum(taxa.pa[,grep("Trichoptera",colnames(taxa.pa))])
+  summ[,21]<-richness.calc(taxa[,grep("Trichoptera",colnames(taxa))])
   summ[,22]<-adapt.sum(taxa[,grep("Trichoptera",colnames(taxa))])/rowSums(taxa)
 
   summ[,23]<-adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])/
@@ -120,6 +121,17 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
     t3[is.na(t3)]<-match(t2,HBI[,1])
   }
   summ[,27]<-apply(taxa.rel.cefi,1,function(x) sum(x*CEFI[t3, 2]*CEFI[t3, 3])/sum(x*CEFI[t3, 3]))
+  
+  summ[,28]<-number.ftrait(taxa,"PREDATOR")/rowSums(taxa)
+  summ[,29]<-(number.ftrait(taxa,"SCRAPER")+number.ftrait(taxa,"SCRAPER/GRAZER"))/rowSums(taxa)
+  summ[,30]<-number.ftrait(taxa,"SHREDDER")/rowSums(taxa)
+  summ[,31]<-number.ftrait(taxa,"COLLECTOR-FILTERER")/rowSums(taxa)
+  summ[,32]<-number.ftrait(taxa,"COLLECTOR-GATHERER")/rowSums(taxa)
+  
+  summ[,33]<-(number.htrait(taxa,"CLINGER")+
+                number.htrait(taxa,"CLINGER-SPRAWLER"))/rowSums(taxa)
+  summ[,34]<-(number.htrait(taxa,"BURROWER")+
+                number.htrait(taxa,"BURROWER-SPRAWLER"))/rowSums(taxa)
 
   summ[is.nan.data.frame(summ)]<-0
 
