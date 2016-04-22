@@ -483,6 +483,77 @@ braydist<-function(x) {
   return(dist)
 }
 
+#' @export
+richness.calc<-function(x){
+  rich<-NULL
+  for (i in 1:nrow(x)){
+    tally<-NULL
+    taxa.present<-colnames(x)[which(x[i,]>0)]
+    tally<-length(grep("idae",taxa.present))
+    taxa.remain<-taxa.present[-c(grep("idae",taxa.present))]
+    if (length(grep(grep.paste(c("Chironominae","Tanypodinae","Diamesinae","Orthocladiinae","Podonominae","Prodiamesinae","Telmatogetoninae")),taxa.remain))>0){
+      tally<-tally+length(grep(grep.paste(c("Chironominae","Tanypodinae")),taxa.remain))
+      if (length(grep(grep.paste(c("Diamesinae","Orthocladiinae","Podonominae","Prodiamesinae","Telmatogetoninae")),taxa.remain))){
+        tally<-tally+1
+      }
+      taxa.remain<-taxa.remain[-c(grep(grep.paste(c("Chironominae","Tanypodinae","Diamesinae","Orthocladiinae","Podonominae","Prodiamesinae","Telmatogetoninae")),taxa.remain))]
+    }
+    if (length(taxa.remain)>0){
+      taxa.orig<-taxa.present[which(!taxa.present%in%taxa.remain)]
+      t1<-unlist(lapply(taxa.orig, function(x) substr(x, start=1,stop=(gregexpr(pattern =';',x)[[1]][1]-1))))
+      t2<-unlist(lapply(taxa.remain, function(x) substr(x, start=1,stop=(gregexpr(pattern =';',x)[[1]][1]-1))))
+      t3<-t1[which(duplicated(t1))]
+      
+      tally<-tally+length(which(!t2%in%t3))
+    }
+    rich[i]<-tally
+  }
+  return(rich)
+}
+
+#' @export
+number.ftrait<-function(x,y){
+  data(trait.feeding,envir = environment())
+  output<-NULL
+  for (i in 1:nrow(x)){
+    trait<-trait.feeding[which(trait.feeding$TAXON%in%toupper(
+      unlist(
+        lapply(colnames(x)[which(x[i,]>0)], function(x) substr(x, start=(gregexpr(pattern =';',x)[[1]][1]+1),stop=nchar(x)))))),]
+    
+    trait<-trait[trait$TRAITVAL==y,]
+    if (nrow(trait)>0){
+      output[i]<-sum(x[i,which(toupper(
+        unlist(
+          lapply(colnames(x), function(x) substr(x, start=(gregexpr(pattern =';',x)[[1]][1]+1),stop=nchar(x)))))%in%trait$TAXON)])
+    } else {
+      output[i]<-0
+    }
+  }
+  return(output)
+}
+
+#' @export
+number.htrait<-function(x,y){
+  data(trait.habit,envir = environment())
+  output<-NULL
+  for (i in 1:nrow(x)){
+    trait<-trait.habit[which(trait.habit$TAXON%in%toupper(
+      unlist(
+        lapply(colnames(x)[which(x[i,]>0)], function(x) substr(x, start=(gregexpr(pattern =';',x)[[1]][1]+1),stop=nchar(x)))))),]
+    
+    trait<-trait[trait$TRAITVAL==y,]
+    if (nrow(trait)>0){
+      output[i]<-sum(x[i,which(toupper(
+        unlist(
+          lapply(colnames(x), function(x) substr(x, start=(gregexpr(pattern =';',x)[[1]][1]+1),stop=nchar(x)))))%in%trait$TAXON)])
+    } else {
+      output[i]<-0
+    }
+  }
+  return(output)
+}
+
+
 ##########################################################################################################
 
 #' Z-Score Calculation
