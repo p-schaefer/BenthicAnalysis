@@ -1,8 +1,8 @@
 Package: BenthicAnalysis
 Type: Package
 Title: Benthic Analysis with Test Site Anlysis
-Version: 0.1-21
-Date: 2015-08-12
+Version: 0.1-22
+Date: 2016-04-22
 Authors@R: person("Patrick", "Schaefer", role = c("aut", "cre"),email = "pschaefer@creditvalleyca.ca")
 Author: Patrick Schaefer [aut, cre]
 Maintainer: Patrick Schaefer <pschaefer@creditvalleyca.ca>
