@@ -132,8 +132,23 @@ site.match<-function(Test, Reference, k=NULL, adaptive=T, RDA.reference=NULL) {
     #  final.dist<-anna.dist[1:Ckmeans.1d.dp(final.dist,2)$size[1]]
     #}
   } else {
+      l<-NULL
+    for (i in 3:if (is.null(k)) length(anna.dist) else k){
+      l[i]<-diff(anna.dist[1:i],lag=1)[i-2]
+      if (l[i]>(1/(i^2))){
+        break
+      }
+    }
+    if (mean(anna.dist[1:k])>mean(anna.dist[1:length(l)])) {
+      warning("Some reference sites may be poorly matched ecologically to test site. Examone plot for confirmation. Consider using adaptive nearest-neighbour breaks.")
+    }
     final.dist<-anna.dist[1:k]
   }
+  
+    if (final.dist[1]>mean(final.dist)){
+    warning("Test site may not match reference set ecologically. Examine plot for confirmation. Consider additional reference sites, or additional ecological data.")
+  }
+
   output<-NULL
   output$final.dist<-final.dist
   output$method<- if (is.null(RDA.reference)) {"ANNA"} else {"RDA-ANNA"}
