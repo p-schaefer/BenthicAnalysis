@@ -294,7 +294,8 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F) {
   }
   data<-raw.data[,colnames(raw.data) %in% restricted.metrics]
 
-  indicative.metrics<-c(hb[which(hb%in%colnames(data)[which(data[nrow(data),]>0)])],lb[which(lb%in%colnames(data)[which(data[nrow(data),]<0)])])
+  #indicative.metrics<-c(hb[which(hb%in%colnames(data)[which(data[nrow(data),]>0)])],lb[which(lb%in%colnames(data)[which(data[nrow(data),]<0)])])
+  indicative.metrics<-colnames(data)
   indicative.metrics<-indicative.metrics[!duplicated(indicative.metrics)]
   reduced.data<-data[,colnames(data)%in%indicative.metrics]
 
@@ -309,8 +310,8 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F) {
     test.var<-names(diff[1])
     cors<-abs(cor(reduced.data[1:nRef,],method="p")[,test.var])+0.001
 
-    if (any(cors<0.7)) {
-      cors<-cors[which(cors<0.7)]
+    if (any(cors<0.75)) {
+      cors<-cors[which(cors<0.75)]
       cors<-cors[(names(diff))]
       cors<-cors[which(!is.na(cors))]
 
@@ -319,8 +320,8 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F) {
 
       for (var in 1:(min((length(indicative.metrics)-2),ceiling(1/5*nrow(data))-2))) {
         cors<-apply((abs(cor(reduced.data[1:nRef,],method="p")[,test.var])+0.001),1,max)
-        if (any(cors<0.7)) {
-          cors<-cors[which(cors<0.7)]
+        if (any(cors<0.75)) {
+          cors<-cors[which(cors<0.75)]
           cors<-cors[(names(diff))]
           cors<-cors[which(!is.na(cors))]
           test.var[var+2]<-names(sort((diff[names(cors)]/cors),decreasing=T)[1])
@@ -344,7 +345,9 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F) {
     if (("Percent EPT" %in% colnames(raw.data)) & !("Percent EPT" %in% test.var)) {
       test.var<-c(test.var,"Percent EPT")
     }
-
+    if (("Percent Chironomidae" %in% colnames(raw.data)) & !("Percent Chironomidae" %in% test.var)) {
+      test.var<-c(test.var,"Percent Chironomidae")
+    }
   }
 
   if (is.null(test.var)){
@@ -362,6 +365,9 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F) {
     }
     if (("Percent EPT" %in% colnames(data)) & !("Percent EPT" %in% test.var)) {
       test.var<-c(test.var,"Percent EPT")
+    }
+    if (("Percent Chironomidae" %in% colnames(data)) & !("Percent Chironomidae" %in% test.var)) {
+      test.var<-c(test.var,"Percent Chironomidae")
     }
   }
 
