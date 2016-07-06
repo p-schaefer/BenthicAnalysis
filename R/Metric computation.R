@@ -138,8 +138,8 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
   summ[,35]<-(number.htrait(taxa,"BURROWER")+
                 number.htrait(taxa,"BURROWER-SPRAWLER"))/abund
 
-  summ[is.nan.data.frame(summ)]<-0
-  summ[is.infinite(summ)]<-0
+  summ[is.nan.data.frame(summ)]<-NA
+  summ[is.inf.data.frame(summ)]<-NA
 
   output<-NULL
   output$Summary.Metrics<-summ
