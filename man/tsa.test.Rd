@@ -47,7 +47,7 @@ data(YKEnvData,envir = environment()) #Biological dataset
 data(YKBioData,envir = environment()) #Environmental dataset
 
 #Calculate indicator metrics from raw biological data
-bio.data.test<-benth.met(bio.data.yk1,2,2)
+bio.data.test<-benth.met(YKBioData,2,2)
 
 #Extract just the summary metrics
 bio.data<-bio.data.test$Summary.Metrics
