@@ -133,6 +133,8 @@ boxplot.tsa.object <- function(tsa.object) {
   par(mar = c(0,0,0,0))
   plot(1, type="n", axes=F, xlab="", ylab="")
   legend("center",text[(b2+1):length(text)],cex=1.25,fill=cols[(b2+1):length(text)],bty="n",x.intersp=1,y.intersp=1)
+  
+  par(def.par)
 
   #close.screen(all=T)
 }
