@@ -56,7 +56,7 @@ bio.data<-bio.data.test$Summary.Metrics
 rownames(YKEnvData)<-bio.data.test$Site.List
 
 #Match a test site (#201) to the nearest neighbour reference set
-nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=F,adaptive=T)
+nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive=T)
 
 #Calculate additional metrics based on selected Reference sites
 taxa.data<-add.met(Test=bio.data.test$Raw.Data[201,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
