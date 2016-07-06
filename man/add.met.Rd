@@ -29,13 +29,13 @@ bio.data.test<-benth.met(YKBioData,2,2)
 rownames(YKEnvData)<-rownames(bio.data.test$Site.List)
 
 #Match a test site (#201) to the nearest neighbour reference set
-nn.sites<-site.match(YKEnvData[201,],YKEnvData[1:118,],k=F,adaptive=T)
+nn.sites<-site.match(YKEnvData[201,],YKEnvData[1:118,],k=NULL,adaptive=T)
 
 #Extract the raw taxa data for additional metric calculation
-taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data[i,]),])
+taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data.test$Raw.Data[201,]),])
 
 #Calculate additional metrics based on nearest neighbour reference sites
-additional.metrics<-add.met(Test=bio.data.test$Raw.Data[rownames(bio.data[201,]),],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
+additional.metrics<-add.met(Test=bio.data.test$Raw.Data[rownames(bio.data.test$Raw.Data[201,]),],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
 additional.metrics
 }
 \keyword{Benthic}

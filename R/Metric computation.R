@@ -12,8 +12,8 @@
 #' @keywords Benthic Metrics
 #' @export
 #' @examples
-#' data(YKEnvData,envir = environment())
-#' benth.met(bio.data.yk1,2,2)
+#' data(YKBioData,envir = environment())
+#' benth.met(YKBioData,2,2)
 
 benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
   if (is.null(HBI)) {
@@ -139,6 +139,7 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
                 number.htrait(taxa,"BURROWER-SPRAWLER"))/abund
 
   summ[is.nan.data.frame(summ)]<-0
+  summ[is.infinite(summ)]<-0
 
   output<-NULL
   output$Summary.Metrics<-summ
@@ -164,19 +165,19 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
 #' data(YKBioData,envir = environment()) #Environmental dataset
 #'
 #' #Calculate indicator metrics from raw biological data
-#' bio.data.test<-benth.met(bio.data.yk1,2,2)
+#' bio.data.test<-benth.met(YKBioData,2,2)
 #'
 #' #standardize row names between datasets
-#' rownames(env.data.yk)<-rownames(bio.data.test$Site.List)
+#' rownames(YKEnvData)<-rownames(bio.data.test$Site.List)
 #'
 #' #Match a test site (#201) to the nearest neighbour reference set
-#' nn.sites<-site.match(env.data.yk[201,],env.data.yk[1:118,],k=F,adaptive=T)
+#' nn.sites<-site.match(YKEnvData[201,],YKEnvData[1:118,],k=NULL,adaptive=T)
 #'
 #' #Extract the raw taxa data for additional metric calculation
-#' taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data[i,]),])
+#' taxa.data<-rbind(bio.data.test$Raw.Data[names(nn.sites$final.dist),],bio.data.test$Raw.Data[rownames(bio.data.test$Raw.Data[201,]),])
 #'
 #' #Calculate additional metrics based on nearest neighbour reference sites
-#' additional.metrics<-add.met(Test=bio.data.test$Raw.Data[rownames(bio.data[201,]),],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
+#' additional.metrics<-add.met(Test=bio.data.test$Raw.Data[rownames(bio.data.test$Raw.Data[201,]),],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
 #' additional.metrics
 
 add.met<-function (Test,Reference) {
@@ -252,8 +253,8 @@ add.met<-function (Test,Reference) {
 #' @keywords Benthic Metrics
 #' @export
 #' @examples
-#' data(YKEnvData,envir = environment())
-#' bio.data<-benth.met(bio.data.yk1,2,2)$Summary.Metrics
+#' data(YKBioData,envir = environment())
+#' bio.data<-benth.met(YKBioData,2,2)$Summary.Metrics
 #' nn.refsites<- c("075-T-1", "019-T-1","003-T-1","076-T-1","071-T-1","022-T-1","074-T-1",
 #' "002-T-1","004-T-1","073-T-1","186-T-1","062-T-1","005-T-1","025-T-1",
 #' "187-T-1","023-T-1","193-T-1","192-T-1","196-T-1","194-T-1")
