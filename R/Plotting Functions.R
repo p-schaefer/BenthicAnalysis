@@ -93,6 +93,7 @@ plot.tsa.object<-function(tsa.object){
 #' boxplot(tsa.results)
 
 boxplot.tsa.object <- function(tsa.object) {
+  def.par <- par(no.readonly = TRUE)
   tsa.stand<-tsa.object$z.scores
   nInd<-ncol(tsa.stand)
   nRef<-nrow(tsa.stand)-1
@@ -122,21 +123,20 @@ boxplot.tsa.object <- function(tsa.object) {
     points(which(colnames(tsa.stand)%in%rownames(part.tsa)[part.tsa$p<0.05]),rep((min(tsa.stand)*1.2),length(rownames(part.tsa)[part.tsa$p<0.05])),col="red",pch="*",cex=2)
   }
   #screen(3)
-  par(mar = c(0,0,0,0))
+  #par(mar = c(0,0,0,0))
   plot(1, type="n", axes=F, xlab="", ylab="")
-  legend("center",text[1:b1],cex=1.25,fill=cols[1:b1],bty="n",x.intersp=1,y.intersp=1)
+  legend("center",text[1:b1],cex=0.9,fill=cols[1:b1],bty="n",x.intersp=0.7,y.intersp=0.7)
   #screen(4)
-  par(mar = c(0,0,0,0))
+  #par(mar = c(0,0,0,0))
   plot(1, type="n", axes=F, xlab="", ylab="")
-  legend("center",text[(b1+1):b2],cex=1.25,fill=cols[(b1+1):b2],bty="n",x.intersp=1,y.intersp=1)
+  legend("center",text[(b1+1):b2],cex=0.9,fill=cols[(b1+1):b2],bty="n",x.intersp=0.7,y.intersp=0.7)
   #screen(5)
-  par(mar = c(0,0,0,0))
+  #par(mar = c(0,0,0,0))
   plot(1, type="n", axes=F, xlab="", ylab="")
-  legend("center",text[(b2+1):length(text)],cex=1.25,fill=cols[(b2+1):length(text)],bty="n",x.intersp=1,y.intersp=1)
-  
-  par(def.par)
+  legend("center",text[(b2+1):length(text)],cex=0.9,fill=cols[(b2+1):length(text)],bty="n",x.intersp=0.7,y.intersp=0.7)
 
   #close.screen(all=T)
+  par(def.par)
 }
 
 ###############################################################################
