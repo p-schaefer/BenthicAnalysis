@@ -129,8 +129,8 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
   summ[,30]<-number.ftrait(taxa,"SHREDDER")/abund
   summ[,31]<-number.ftrait(taxa,"COLLECTOR-FILTERER")/abund
   summ[,32]<-number.ftrait(taxa,"COLLECTOR-GATHERER")/abund
-  summ[,33]<-(number.ftrait(taxa,"SCRAPER")+number.ftrait(taxa,"SCRAPER/GRAZER"))/(number.ftrait(taxa,"SHREDDER")+number.ftrait(taxa,"COLLECTOR"))
-  
+  #summ[,33]<-(number.ftrait(taxa,"SCRAPER")+number.ftrait(taxa,"SCRAPER/GRAZER"))/(number.ftrait(taxa,"SHREDDER")+number.ftrait(taxa,"COLLECTOR"))
+  summ[,33]<-log(summ[,29]/(summ[,30]+summ[,31]+summ[,32]))
   
   
   summ[,34]<-(number.htrait(taxa,"CLINGER")+
