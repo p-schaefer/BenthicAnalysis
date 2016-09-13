@@ -55,7 +55,7 @@
 #' pcoa.tsa(tsa.results)
 
 
-tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=T, m.select=T,rank=F) {
+tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=T, m.select=T,rank=F,na.cutoff=0.7) {
   if (any((colnames(Test)%in%colnames(Reference))==F)|
       (ncol(Test)!=ncol(Reference))) {
     stop("Metric mismatch between test site and reference set")
