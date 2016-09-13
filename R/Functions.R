@@ -21,6 +21,7 @@
 #' contribution to the overall mahalanobis distance score
 #' @return $mahalanobis.distance - vector of reference sites and test site mahalanobis distance scores
 #' @return $z.scores - Table containing test and reference sites metrics standrdized to z-scores of the reference sites only
+#' @param na.cutoff A value between 0-1 indicating the percent of the reference set that can contain NAs for any metric. NAs are replaced by the mean value.
 #' @keywords Test Site Analysis, Mahalanobis Distance
 #' @references \url{http://goo.gl/h4JAGP}
 #' @export
@@ -48,7 +49,7 @@
 #' tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T)
 #' tsa.results
 #'
-#' Evaluate Results
+#' #Evaluate Results
 #' boxplot(tsa.results)
 #' plot(tsa.results)
 #' pcoa.tsa(tsa.results)
@@ -66,9 +67,18 @@ tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=T, m.select=T,ra
       distance<-distance[names(distance)%in%rownames(Reference)]
     }
   }
-  Reference<-Reference[,!is.na(colSums(Reference))]
-  Reference<-Reference[,!is.infinite(colSums(Reference))]
-  Reference<-Reference[,!is.na(colSums(Reference))]
+  
+  Reference<-Reference[,!is.na(Test)]
+  Reference<-Reference[,apply(apply(Reference,2,is.na),2,function(x) length(which(x==T))<(na.cutoff*nrow(Reference)))]
+  if (any(apply(Reference,2,function(x) any(is.na(x))))){
+    for (i in names(which(apply(Reference,2,function(x) any(is.na(x)))))){
+      Reference[is.na(Reference[,i]),i]<-mean(Reference[!is.na(Reference[,i]),i])
+    }
+  }
+
+  #Reference<-Reference[,!is.na(colSums(Reference))]
+  #Reference<-Reference[,!is.infinite(colSums(Reference))]
+  #Reference<-Reference[,!is.na(colSums(Reference))]
   Test<-Test[,colnames(Reference)]
   #if (!is.null(add.metric) & rownames(Test)%in%rownames(add.metric) & any(rownames(Reference)%in%rownames(add.metric)==F)){
   #  stop("Missing add.metrics data for one or more test and/or reference sites")
