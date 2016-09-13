@@ -616,7 +616,8 @@ shinyServer(function(input, output, session) {
                             Reference=add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])[1:length(nn.sites()$final.dist),sel.mets()],
                             distance= if (distance()) nn.sites()$final.dist else NULL,
                             outlier.rem= outlier.rem(),
-                            m.select= m.select())
+                            m.select= m.select(),
+                            na.cutoff=0.7)
       tsa.results
     } else {
       taxa.data<-rbind(bio.data()$Summary.Metrics[names(nn.sites()$final.dist),],bio.data()$Summary.Metrics[test.site(),])
@@ -624,7 +625,8 @@ shinyServer(function(input, output, session) {
                             Reference=taxa.data[1:length(nn.sites()$final.dist),sel.mets()],
                             distance= if (distance()) nn.sites()$final.dist else NULL,
                             outlier.rem= outlier.rem(),
-                            m.select= m.select())
+                            m.select= m.select(),
+                            na.cutoff=0.7)
       tsa.results
     }
   })
@@ -1104,7 +1106,8 @@ shinyServer(function(input, output, session) {
                                     Reference=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[names(nn.sites$final.dist),])[1:length(nn.sites$final.dist),ab.sel.mets],
                                     distance= if (ab.distance) nn.sites$final.dist else NULL,
                                     outlier.rem= ab.outlier.rem,
-                                    m.select= ab.m.select),
+                                    m.select= ab.m.select,
+                                    na.cutoff=0.7),
                                silent=T)
               if(is(tsa.results,"try-error")){
                 results[i,1]<-tsa.results[1]
@@ -1117,7 +1120,8 @@ shinyServer(function(input, output, session) {
                                     Reference=taxa.data[1:length(nn.sites$final.dist),ab.sel.mets],
                                     distance= if (ab.distance) nn.sites$final.dist else NULL,
                                     outlier.rem= ab.outlier.rem,
-                                    m.select= ab.m.select),
+                                    m.select= ab.m.select,
+                                    na.cutoff=0.7),
                                silent=T)
               if(is(tsa.results,"try-error")){
                 results[i,1]<-tsa.results[1]
