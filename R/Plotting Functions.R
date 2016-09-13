@@ -65,6 +65,7 @@ plot.tsa.object<-function(tsa.object){
 #' Boxplots of z-scores used in Test Site Analysis. Metrics used in calculation of TSA are circled, metrics that
 #' contribute significantly to an impairment score are marked with an * along the x axis.
 #' @param tsa.object An object from tsa.test()
+#' @param ... Arguments passed to boxplot()
 #' @keywords Test Site Analysis, Boxplot
 #' @export
 #' @examples
@@ -94,7 +95,7 @@ plot.tsa.object<-function(tsa.object){
 #' Evaluate Results
 #' boxplot(tsa.results)
 
-boxplot.tsa.object <- function(tsa.object) {
+boxplot.tsa.object <- function(tsa.object,...) {
   def.par <- par(no.readonly = TRUE)
   tsa.stand<-tsa.object$z.scores
   nInd<-ncol(tsa.stand)
@@ -116,7 +117,7 @@ boxplot.tsa.object <- function(tsa.object) {
   #split.screen(c(1, 3), screen = 2)
   #screen(1)
   par(mar = c(1.9,0.8,1.2,0.8))
-  boxplot(tsa.stand[1:nRef,],col=cols,outline=F,yaxt="n",ylim=c(min(tsa.stand)*1.3,max(tsa.stand)*1.1),names=seq(1:nInd),cex.axis=1.2,main="")
+  boxplot(tsa.stand[1:nRef,],col=cols,outline=F,yaxt="n",ylim=c(min(tsa.stand)*1.3,max(tsa.stand)*1.1),names=seq(1:nInd),cex.axis=1.2,main="",...)
   title(main=paste0(rownames(tsa.stand)[(nRef+1)]," Boxplot"),cex=1.5)
   points(seq(1:nInd),tsa.stand[(nRef+1),],col="red",pch=19,cex=1)
 
