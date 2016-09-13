@@ -5,7 +5,7 @@
 \title{Test Site Analysis Function}
 \usage{
 tsa.test(Test, Reference, distance = NULL, outlier.rem = T, m.select = T,
-  rank = F)
+  rank = F, na.cutoff = 0.7)
 }
 \arguments{
 \item{Test}{Data frame of metric scores at the test site.}
@@ -18,6 +18,8 @@ or NULL for unweighted Mahalanobis Distance Calculation}
 \item{outlier.rem}{Logical Argument indicating whether to use an Adaptive Critical Threshold (\code{\link[mvoutlier]{arw}}) or \code{\link[mvoutlier]{pcout}} to remove outliers from the Reference set.}
 
 \item{m.select}{Logical argument indicating whether the best subset of metrics should be automatically selected from the data.}
+
+\item{na.cutoff}{A value between 0-1 indicating the percent of the reference set that can contain NAs for any metric. NAs are replaced by the mean value.}
 }
 \value{
 $general.results - Table containing the number and names of reference sites used and number of indicator metrics used

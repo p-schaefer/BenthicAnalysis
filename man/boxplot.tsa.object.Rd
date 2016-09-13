@@ -4,10 +4,12 @@
 \alias{boxplot.tsa.object}
 \title{z-score Boxplots}
 \usage{
-\method{boxplot}{tsa.object}(tsa.object)
+\method{boxplot}{tsa.object}(tsa.object, ...)
 }
 \arguments{
 \item{tsa.object}{An object from tsa.test()}
+
+\item{...}{Arguments passed to boxplot()}
 }
 \description{
 Boxplots of z-scores used in Test Site Analysis. Metrics used in calculation of TSA are circled, metrics that
