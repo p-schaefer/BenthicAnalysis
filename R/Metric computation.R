@@ -50,7 +50,7 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
   taxa.intol<-taxa[,taxa.names[grep(grep.paste(HBI[which(HBI[,2]<5),1]),taxa.names)]]
   n.taxa<-ncol(taxa)
 
-  summ<-data.frame(matrix(nrow=nrow(taxa),ncol=35))
+  summ<-data.frame(matrix(nrow=nrow(taxa),ncol=37))
   rownames(summ)<-rownames(taxa)
   colnames(summ)<-c("Richness","Simpson","Shannon",
                     "Percent Dominance","Percent Oligochaeta",
@@ -65,7 +65,7 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
                     "Trich Richness","Percent Trich",
                     "EPT per EPT and Chir","Percent Non Chir Dip","Percent CIGH","HBI","CEFI",
                     "Percent Predator", "Percent Scraper", "Percent Shredder", "Percent Filter","Percent Gatherer","Scraper:Shredder+Collector",
-                    "Percent Clinger","Percent Burrower")
+                    "Percent Clinger","Percent Burrower","Percent Sprawler","Burrower:Sprawler+Clinger")
   
   abund<-rowSums(taxa)
 
@@ -130,13 +130,13 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
   summ[,31]<-number.ftrait(taxa,"COLLECTOR-FILTERER")/abund
   summ[,32]<-number.ftrait(taxa,"COLLECTOR-GATHERER")/abund
   #summ[,33]<-(number.ftrait(taxa,"SCRAPER")+number.ftrait(taxa,"SCRAPER/GRAZER"))/(number.ftrait(taxa,"SHREDDER")+number.ftrait(taxa,"COLLECTOR"))
-  summ[,33]<-log(summ[,29]/(summ[,30]+summ[,31]+summ[,32]))
+  summ[,33]<-log(summ[,29]/(summ[,30]+summ[,32]))
   
   
-  summ[,34]<-(number.htrait(taxa,"CLINGER")+
-                number.htrait(taxa,"CLINGER-SPRAWLER"))/abund
-  summ[,35]<-(number.htrait(taxa,"BURROWER")+
-                number.htrait(taxa,"BURROWER-SPRAWLER"))/abund
+  summ[,34]<-(number.htrait(taxa,"CLINGER"))/abund
+  summ[,35]<-(number.htrait(taxa,"BURROWER"))/abund
+  summ[,36]<-(number.htrait(taxa,"SPRAWLER"))/abund
+  summ[,37]<-log(summ[,35]/(summ[,34]+summ[,36]))
 
   summ[is.nan.data.frame(summ)]<-NA
   summ[is.inf.data.frame(summ)]<-NA
