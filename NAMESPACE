@@ -2,8 +2,10 @@
 
 S3method(boxplot,tsa.object)
 S3method(is.nan,data.frame)
+S3method(print,benth.metric)
 S3method(print,match.object)
 S3method(print,tsa.object)
+S3method(summary,benth.metric)
 S3method(summary,match.object)
 S3method(summary,tsa.object)
 export("%w/o%")

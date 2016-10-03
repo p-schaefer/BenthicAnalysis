@@ -15,7 +15,7 @@
 #' data(YKBioData,envir = environment())
 #' benth.met(YKBioData,2,2)
 
-benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
+benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
   if (is.null(HBI)) {
     data(HBI1,envir = environment())
     CEFI<-HBI[,c(3,6,7)]
@@ -144,10 +144,20 @@ benth.met<-function(x,tax.fields,site.fields,HBI=NULL) {
   output<-NULL
   output$Summary.Metrics<-summ
   output$Raw.Data<-taxa
-  output$Taxa.List<-taxa.names
-  output$Site.List<-site.names
+  output$Taxa.List<-as.character(taxa.names)
+  output$Site.List<-as.character(site.names)
   class(output)<-"benth.metric"
   return(output)
+}
+
+#' @export
+print.benth.metric<-function(benth.metric) {
+  print(benth.metric$Summary.Metrics)
+}
+
+#' @export
+summary.benth.metric<-function(benth.metric) {
+  summary(benth.metric$Summary.Metrics)
 }
 
 #############################################################################################################

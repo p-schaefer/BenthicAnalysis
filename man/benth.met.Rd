@@ -4,7 +4,7 @@
 \alias{benth.met}
 \title{Benthic Metric Calculation}
 \usage{
-benth.met(x, tax.fields, site.fields, HBI = NULL)
+benth.met(x, tax.fields = 2, site.fields, HBI = NULL)
 }
 \arguments{
 \item{x}{data.frame with sampling events in rows and taxa in columns. No row or column names should be defined}
