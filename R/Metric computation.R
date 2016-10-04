@@ -50,58 +50,60 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
   taxa.intol<-taxa[,taxa.names[grep(grep.paste(HBI[which(HBI[,2]<5),1]),taxa.names)]]
   n.taxa<-ncol(taxa)
 
-  summ<-data.frame(matrix(nrow=nrow(taxa),ncol=37))
-  rownames(summ)<-rownames(taxa)
-  colnames(summ)<-c("Richness","Simpson","Shannon",
-                    "Percent Dominance","Percent Oligochaeta",
-                    "Percent Chironomidae","Percent Isopoda","Percent Amphipoda",
+  #summ<-data.frame(matrix(nrow=nrow(taxa),ncol=39))
+  summ<-NULL
+  #colnames(summ)<-c("Richness","Simpson","Shannon",
+  #                  "Percent Dominance","Percent Oligochaeta",
+  #                  "Percent Chironomidae","Percent Isopoda","Percent Amphipoda",
 
-                    "Percent Coleoptera", "Coleo as Elmidae", "Trich as Hydropsychidae","Ephem as Baetidae",
-                    "Intolerants Richness","Percent Intolerants",
-
-                    "Percent EPT","EPT Richness",
-                    "Ephem Richness","Percent Ephem",
-                    "Plec Richness","Percent Plec",
-                    "Trich Richness","Percent Trich",
-                    "EPT per EPT and Chir","Percent Non Chir Dip","Percent CIGH","HBI","CEFI",
-                    "Percent Predator", "Percent Scraper", "Percent Shredder", "Percent Filter","Percent Gatherer","Scraper:Shredder+Collector",
-                    "Percent Clinger","Percent Burrower","Percent Sprawler","Burrower:Sprawler+Clinger")
+  #                  "Percent Coleoptera", "Coleo as Elmidae", "Trich as Hydropsychidae","Ephem as Baetidae",
+  #                 "Intolerants Richness","Percent Intolerants",
+#
+  #                  "Percent EPT","EPT Richness",
+  #                  "Ephem Richness","Percent Ephem",
+  #                  "Plec Richness","Percent Plec",
+  #                  "Trich Richness","Percent Trich",
+  #                  "EPT per EPT and Chir","Percent Non Chir Dip","Percent CIGH","HBI","CEFI",
+  #                  "Percent Predator", "Percent Scraper", "Percent Shredder", "Percent Filter","Percent Gatherer","Scraper:Shredder+Collector",
+  #                  "Percent Clinger","Percent Burrower","Percent Sprawler","Burrower:Sprawler+Clinger")
   
   abund<-rowSums(taxa)
 
-  summ[,1]<-richness.calc(taxa)
-  summ[,2]<-diversity(taxa,index="simpson")
-  summ[,3]<-diversity(taxa,index="shannon")
-  summ[,4]<-(apply(taxa, 1, max))/abund
-  summ[,5]<-adapt.sum(taxa[,grep(grep.paste(c("Oligochaetae","Oligochaeta","Oligochaete","Lumbriculida","Haplotaxida","Clitellata","Naidina")),colnames(taxa))])/abund
-  summ[,6]<-adapt.sum(taxa[,grep(grep.paste(c("Chironomidae","Chironominae","Tanypodinae","Diamesinae","Orthocladiinae","Podonominae","Prodiamesinae","Telmatogetoninae")),colnames(taxa))])/abund
-  summ[,7]<-adapt.sum(taxa[,grep("Isopoda",colnames(taxa))])/abund
-  summ[,8]<-adapt.sum(taxa[,grep("Amphipoda",colnames(taxa))])/abund
-  summ[,9]<-adapt.sum(taxa[,grep("Coleoptera",colnames(taxa))])/abund
-  summ[,10]<-adapt.sum(taxa[,grep("Elmidae",colnames(taxa))])/adapt.sum(taxa[,grep("Coleoptera",colnames(taxa))])
+  summ$Richness<-richness.calc(taxa)
+  summ$Simpson<-diversity(taxa,index="simpson")
+  summ$Shannon<-diversity(taxa,index="shannon")
+  summ$'Percent Dominance'<-(apply(taxa, 1, max))/abund
+  summ$'Percent Oligochaeta'<-adapt.sum(taxa[,grep(grep.paste(c("Oligochaetae","Oligochaeta","Oligochaete","Lumbriculida","Haplotaxida","Clitellata","Naidina")),colnames(taxa))])/abund
+  summ$'Percent Chironomidae'<-adapt.sum(taxa[,grep(grep.paste(c("Chironomidae","Chironominae","Tanypodinae","Diamesinae","Orthocladiinae","Podonominae","Prodiamesinae","Telmatogetoninae")),colnames(taxa))])/abund
+  summ$'Percent Isopoda'<-adapt.sum(taxa[,grep("Isopoda",colnames(taxa))])/abund
+  summ$'Percent Amphipoda'<-adapt.sum(taxa[,grep("Amphipoda",colnames(taxa))])/abund
+  summ$'Percent Coleoptera'<-adapt.sum(taxa[,grep("Coleoptera",colnames(taxa))])/abund
+  summ$'Coleo as Elmidae'<-adapt.sum(taxa[,grep("Elmidae",colnames(taxa))])/adapt.sum(taxa[,grep("Coleoptera",colnames(taxa))])
   
-  summ[,11]<-adapt.sum(taxa[,grep("Hydropsychidae",colnames(taxa))])/adapt.sum(taxa[,grep("Trichoptera",colnames(taxa))])
-  summ[,12]<-adapt.sum(taxa[,grep("Baetidae",colnames(taxa))])/adapt.sum(taxa[,grep("Ephemeroptera",colnames(taxa))])
+  summ$'Trich as Hydropsychidae'<-adapt.sum(taxa[,grep("Hydropsychidae",colnames(taxa))])/adapt.sum(taxa[,grep("Trichoptera",colnames(taxa))])
+  summ$'Ephem as Baetidae'<-adapt.sum(taxa[,grep("Baetidae",colnames(taxa))])/adapt.sum(taxa[,grep("Ephemeroptera",colnames(taxa))])
 
-  summ[,13]<-apply(taxa.intol, 1, function(x) length(which(x>0)))
-  summ[,14]<-adapt.sum(taxa.intol)/abund
-
-  summ[,15]<-adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])/abund
-  summ[,16]<-richness.calc(taxa[,grep("Ephemeroptera|Plecoptera|Trichoptera",colnames(taxa))])
-  summ[,17]<-richness.calc(taxa[,grep("Ephemeroptera",colnames(taxa))])
-  summ[,18]<-adapt.sum(taxa[,grep("Ephemeroptera",colnames(taxa))])/abund
-  summ[,19]<-richness.calc(taxa[,grep("Plecoptera",colnames(taxa))])
-  summ[,20]<-adapt.sum(taxa[,grep("Plecoptera",colnames(taxa))])/abund
-  summ[,21]<-richness.calc(taxa[,grep("Trichoptera",colnames(taxa))])
-  summ[,22]<-adapt.sum(taxa[,grep("Trichoptera",colnames(taxa))])/abund
-
-  summ[,23]<-adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])/
+  summ$'Percent EPT'<-adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])/abund
+  summ$'Percent mEPT'<-(adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])-adapt.sum(taxa[,grep(paste0("Baetidae|Hydropsychidae"),colnames(taxa))]))/abund
+  summ$'Percent ICHAEBO'<-(summ$'Percent Oligochaeta'+summ$'Percent Chironomidae'+summ$'Percent Isopoda'+summ$'Percent Amphipoda')+(adapt.sum(taxa[,grep(paste0("Baetidae|Hydropsychidae"),colnames(taxa))])/abund)
+  summ$'EPT Richness'<-richness.calc(taxa[,grep("Ephemeroptera|Plecoptera|Trichoptera",colnames(taxa))])
+  summ$'Ephem Richness'<-richness.calc(taxa[,grep("Ephemeroptera",colnames(taxa))])
+  summ$'Percent Ephem'<-adapt.sum(taxa[,grep("Ephemeroptera",colnames(taxa))])/abund
+  summ$'Plec Richness'<-richness.calc(taxa[,grep("Plecoptera",colnames(taxa))])
+  summ$'Percent Plec'<-adapt.sum(taxa[,grep("Plecoptera",colnames(taxa))])/abund
+  summ$'Trich Richness'<-richness.calc(taxa[,grep("Trichoptera",colnames(taxa))])
+  summ$'Percent Trich'<-adapt.sum(taxa[,grep("Trichoptera",colnames(taxa))])/abund
+  
+  summ$'EPT per EPT and Chir'<-adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])/
     (adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])+
               adapt.sum(taxa[,grep(grep.paste(c("Chironomidae","Chironominae","Tanypodinae","Diamesinae","Orthocladiinae","Podonominae","Prodiamesinae","Telmatogetoninae")),colnames(taxa))]))
-  summ[,24]<-1-(adapt.sum(taxa[,grep(grep.paste(c("Chironomidae","Chironominae","Tanypodinae","Diamesinae","Orthocladiinae","Podonominae","Prodiamesinae","Telmatogetoninae")),colnames(taxa))])/adapt.sum(taxa[,grep(paste0("Diptera"),colnames(taxa))]))
   
-  summ[,25]<-adapt.sum(taxa[,grep("Corixidae|Hirudinea|Isopoda|Gastropoda",colnames(taxa))])/abund
-
+  summ$'Percent Non Chir Dip'<-1-(adapt.sum(taxa[,grep(grep.paste(c("Chironomidae","Chironominae","Tanypodinae","Diamesinae","Orthocladiinae","Podonominae","Prodiamesinae","Telmatogetoninae")),colnames(taxa))])/adapt.sum(taxa[,grep(paste0("Diptera"),colnames(taxa))]))
+  summ$'Percent CIGH'<-adapt.sum(taxa[,grep("Corixidae|Hirudinea|Isopoda|Gastropoda",colnames(taxa))])/abund
+  
+  summ$'Intolerants Richness'<-apply(taxa.intol, 1, function(x) length(which(x>0)))
+  summ$'Percent Intolerants'<-adapt.sum(taxa.intol)/abund
+  
   if (tax.fields==2) {
     taxa.hbi<-taxa[,taxa.names[grep(grep.paste(HBI[,1]),taxa.names)]]
     t1<-lapply(colnames(taxa.hbi), function(x) substr(x, start=(gregexpr(pattern =';',x)[[1]][1]+1),stop=nchar(x))) #find matches between taxa.hbi and HBI in HBI
@@ -110,7 +112,7 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
       t2<-lapply(taxa.names[grep(grep.paste(t1[which(is.na(t3))]),taxa.names)], function(x) substr(x, stop=(gregexpr(pattern =';',x)[[1]][1]-1),start=1))
       t3[is.na(t3)]<-match(t2,HBI[,1])
     }
-    summ[,26]<-apply(taxa.hbi,1,function(x) sum(x*HBI[t3, 2])/sum(x))
+    summ$'HBI'<-apply(taxa.hbi,1,function(x) sum(x*HBI[t3, 2])/sum(x))
   }
 
   taxa.rel.cefi<-taxa.rel
@@ -122,21 +124,24 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
     t2<-lapply(taxa.names[grep(grep.paste(t1[which(is.na(t3))]),taxa.names)], function(x) substr(x, stop=(gregexpr(pattern =';',x)[[1]][1]-1),start=1))
     t3[is.na(t3)]<-match(t2,HBI[,1])
   }
-  summ[,27]<-apply(taxa.rel.cefi,1,function(x) sum(x*CEFI[t3, 2]*CEFI[t3, 3])/sum(x*CEFI[t3, 3]))
+  summ$'CEFI'<-apply(taxa.rel.cefi,1,function(x) sum(x*CEFI[t3, 2]*CEFI[t3, 3])/sum(x*CEFI[t3, 3]))
   
-  summ[,28]<-number.ftrait(taxa,"PREDATOR")/abund
-  summ[,29]<-(number.ftrait(taxa,"SCRAPER")+number.ftrait(taxa,"SCRAPER/GRAZER"))/abund
-  summ[,30]<-number.ftrait(taxa,"SHREDDER")/abund
-  summ[,31]<-number.ftrait(taxa,"COLLECTOR-FILTERER")/abund
-  summ[,32]<-number.ftrait(taxa,"COLLECTOR-GATHERER")/abund
+  summ$'Percent Predator'<-number.ftrait(taxa,"PREDATOR")/abund
+  summ$'Percent Scraper'<-(number.ftrait(taxa,"SCRAPER")+number.ftrait(taxa,"SCRAPER/GRAZER"))/abund
+  summ$'Percent Shredder'<-number.ftrait(taxa,"SHREDDER")/abund
+  summ$'Percent Filter'<-number.ftrait(taxa,"COLLECTOR-FILTERER")/abund
+  summ$'Percent Gatherer'<-number.ftrait(taxa,"COLLECTOR-GATHERER")/abund
   #summ[,33]<-(number.ftrait(taxa,"SCRAPER")+number.ftrait(taxa,"SCRAPER/GRAZER"))/(number.ftrait(taxa,"SHREDDER")+number.ftrait(taxa,"COLLECTOR"))
-  summ[,33]<-log(summ[,29]/(summ[,30]+summ[,32]))
+  summ$'Scraper:Shredder+Collector'<-log(summ$'Percent Scraper'/(summ$'Percent Shredder'+summ$'Percent Gatherer'))
   
   
-  summ[,34]<-(number.htrait(taxa,"CLINGER"))/abund
-  summ[,35]<-(number.htrait(taxa,"BURROWER"))/abund
-  summ[,36]<-(number.htrait(taxa,"SPRAWLER"))/abund
-  summ[,37]<-log(summ[,35]/(summ[,34]+summ[,36]))
+  summ$'Percent Clinger'<-(number.htrait(taxa,"CLINGER"))/abund
+  summ$'Percent Burrower'<-(number.htrait(taxa,"BURROWER"))/abund
+  summ$'Percent Sprawler'<-(number.htrait(taxa,"SPRAWLER"))/abund
+  summ$'Burrower:Sprawler+Clinger'<-log(summ$'Percent Burrower'/(summ$'Percent Clinger'+summ$'Percent Sprawler'))
+  
+  summ<-data.frame(summ)
+  rownames(summ)<-rownames(taxa)
 
   summ[is.nan.data.frame(summ)]<-NA
   summ[is.inf.data.frame(summ)]<-NA
