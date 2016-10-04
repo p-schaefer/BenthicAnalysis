@@ -20,7 +20,7 @@ nn.sites<-site.match(YKEnvData[201,-c(1)],YKEnvData[1:118,-c(1)],k=NULL,adaptive
 taxa.data<-add.met(Test=bio.data.test$Raw.Data[201,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
 
 #TSA test of indicator metrics at test site and reference sites selected used site.match()
-tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=T, m.select=T)
+tsa.results<-tsa.test(Test=taxa.data[nrow(taxa.data),],Reference=taxa.data[names(nn.sites$final.dist),],distance=nn.sites$final.dist, outlier.rem=F, m.select=T)
 tsa.results
 
 #Evaluate Results

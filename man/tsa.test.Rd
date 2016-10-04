@@ -5,7 +5,7 @@
 \title{Test Site Analysis Function}
 \usage{
 tsa.test(Test, Reference, distance = NULL, outlier.rem = T, m.select = T,
-  rank = F, na.cutoff = 0.7)
+  rank = F, na.cutoff = 0.7, outbound = 0.1)
 }
 \arguments{
 \item{Test}{Data frame of metric scores at the test site.}
@@ -15,11 +15,13 @@ tsa.test(Test, Reference, distance = NULL, outlier.rem = T, m.select = T,
 \item{distance}{Vector of weights to use for optional weighted Mahalanobis Distance calculation. Can be output of \code{\link[BenthicAnalysis]{site.match}}$final.dist,
 or NULL for unweighted Mahalanobis Distance Calculation}
 
-\item{outlier.rem}{Logical Argument indicating whether to use an Adaptive Critical Threshold (\code{\link[mvoutlier]{arw}}) or \code{\link[mvoutlier]{pcout}} to remove outliers from the Reference set.}
+\item{outlier.rem}{Logical argument indicating whether \code{\link[mvoutlier]{pcout}} should be used to remove outliers from the Reference set.}
 
 \item{m.select}{Logical argument indicating whether the best subset of metrics should be automatically selected from the data.}
 
 \item{na.cutoff}{A value between 0-1 indicating the percent of the reference set that can contain NAs for any metric. NAs are replaced by the mean value.}
+
+\item{outbound}{Used if outlier.rem=T A numeric value between 0 and 1 indicating the outlier boundary for defining values as final outliers (default to 0.1)}
 }
 \value{
 $general.results - Table containing the number and names of reference sites used and number of indicator metrics used

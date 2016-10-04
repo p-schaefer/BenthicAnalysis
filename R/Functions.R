@@ -11,8 +11,10 @@
 #' @param Reference Data frame of metric scores at the reference sites.
 #' @param distance Vector of weights to use for optional weighted Mahalanobis Distance calculation. Can be output of \code{\link[BenthicAnalysis]{site.match}}$final.dist,
 #' or NULL for unweighted Mahalanobis Distance Calculation
-#' @param outlier.rem Logical Argument indicating whether to use an Adaptive Critical Threshold (\code{\link[mvoutlier]{arw}}) or \code{\link[mvoutlier]{pcout}} to remove outliers from the Reference set.
+#' @param outlier.rem Logical argument indicating whether \code{\link[mvoutlier]{pcout}} should be used to remove outliers from the Reference set.
 #' @param m.select Logical argument indicating whether the best subset of metrics should be automatically selected from the data.
+#' @param na.cutoff A value between 0-1 indicating the percent of the reference set that can contain NAs for any metric. NAs are replaced by the mean value.
+#' @param outbound Used if outlier.rem=T A numeric value between 0 and 1 indicating the outlier boundary for defining values as final outliers (default to 0.1)
 #' @return $general.results - Table containing the number and names of reference sites used and number of indicator metrics used
 #' @return $tsa.results - Table containing the status rank of the test site, numerical interval and equivalence test,
 #' test site's mahalanobis sistance, the upper and lower critical mahalanobis distance values, the non-centrallity parameter lambda and F-value of the test site
@@ -21,7 +23,6 @@
 #' contribution to the overall mahalanobis distance score
 #' @return $mahalanobis.distance - vector of reference sites and test site mahalanobis distance scores
 #' @return $z.scores - Table containing test and reference sites metrics standrdized to z-scores of the reference sites only
-#' @param na.cutoff A value between 0-1 indicating the percent of the reference set that can contain NAs for any metric. NAs are replaced by the mean value.
 #' @keywords Test Site Analysis, Mahalanobis Distance
 #' @references \url{http://goo.gl/h4JAGP}
 #' @export
@@ -55,7 +56,7 @@
 #' pcoa.tsa(tsa.results)
 
 
-tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=T, m.select=T,rank=F,na.cutoff=0.7) {
+tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=T, m.select=T,rank=F,na.cutoff=0.7,outbound=0.1) {
   if (any((colnames(Test)%in%colnames(Reference))==F)|
       (ncol(Test)!=ncol(Reference))) {
     stop("Metric mismatch between test site and reference set")
@@ -102,7 +103,8 @@ tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=T, m.select=T,ra
   }
 
   if (m.select==T){
-    data<-metric.select(Test=data.raw[nrow(data.raw),],Reference=data.raw[1:nRef,],outlier.rem=outlier.rem,rank=rank)$raw.data
+    metric.select.object<-metric.select(Test=data.raw[nrow(data.raw),],Reference=data.raw[1:nRef,],outlier.rem=outlier.rem,rank=rank,outbound=outbound)
+    data<-metric.select.object$raw.data
   }
 
   if (m.select==F & outlier.rem==T) {
@@ -110,19 +112,27 @@ tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=T, m.select=T,ra
     if (((nrow(data))-1-(ncol(data)*2))<1){
       stop("Too few reference sites for number of indicators")
     }
-    if (has_warning(covMcd(data[1:nRef,])) & any(findCorrelation(cor(data[1:nRef,]),cutoff=0.7))) {
-      data<-data[,-c(findCorrelation(cor(data[1:nRef,]),cutoff=0.7))]
+    if (!any(apply(Reference, 2, mad)!=0 & !is.na(apply(Reference, 2, mad)!=0))){
+      stop("More than 50% equal values in one or more variables or too many NAs")
     }
-    if (has_warning(covMcd(data[1:nRef,])) & any(findCorrelation(cor(data[1:nRef,]),cutoff=0.6))) {
-      data<-data[,-c(findCorrelation(cor(data[1:nRef,]),cutoff=0.6))]
-    }
-    if (has_warning(covMcd(data[1:nRef,])) & any(findCorrelation(cor(data[1:nRef,]),cutoff=0.5))) {
-      data<-data[,-c(findCorrelation(cor(data[1:nRef,]),cutoff=0.5))]
-    }
-    data<-data[arw(data[1:nRef,],suppressWarnings(covMcd(data[1:nRef,])$center),suppressWarnings(covMcd(data[1:nRef,])$cov))$w,]
-    if (rownames(data)[nrow(data)]!=rownames(Test)){
-      data[(nrow(data)+1),]<-Test[,colnames(Test)%in%colnames(data)]
-    }
+    Reference1<-Reference[c(which(pcout(Reference,outbound=outbound)$wfinal01==1)),]
+    data<-rbind(Reference1,Test)
+    #if (has_warning(covMcd(data[1:nRef,])) & any(findCorrelation(cor(data[1:nRef,]),cutoff=0.8))) {
+    #  data<-data[,-c(findCorrelation(cor(data[1:nRef,]),cutoff=0.8))]
+    #}
+    #if (has_warning(covMcd(data[1:nRef,])) & any(findCorrelation(cor(data[1:nRef,]),cutoff=0.7))) {
+    #  data<-data[,-c(findCorrelation(cor(data[1:nRef,]),cutoff=0.7))]
+    #}
+    #if (has_warning(covMcd(data[1:nRef,])) & any(findCorrelation(cor(data[1:nRef,]),cutoff=0.6))) {
+    #  data<-data[,-c(findCorrelation(cor(data[1:nRef,]),cutoff=0.6))]
+    #}
+    #if (has_warning(covMcd(data[1:nRef,])) & any(findCorrelation(cor(data[1:nRef,]),cutoff=0.5))) {
+    #  data<-data[,-c(findCorrelation(cor(data[1:nRef,]),cutoff=0.5))]
+    #}
+    #data<-data[arw(data[1:nRef,],suppressWarnings(covMcd(data[1:nRef,])$center),suppressWarnings(covMcd(data[1:nRef,])$cov))$w,]
+    #if (rownames(data)[nrow(data)]!=rownames(Test)){
+    #  data[(nrow(data)+1),]<-Test[,colnames(Test)%in%colnames(data)]
+    #}
   } 
 
   nRef<-nrow(data)-1
@@ -270,6 +280,16 @@ tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=T, m.select=T,ra
   output$raw.data<-rbind(Reference[rownames(data)[-c(nrow(data))],],Test)
   output$outlier.rem<-outlier.rem
   output$m.select<-m.select
+  output$ref.sites<-rownames(Reference)
+  output$test.site<-rownames(Test)
+  if (outlier.rem) {
+    if (m.select) {
+      output$outlier.ref.sites<-metric.select.object$outlier.ref.sites
+    } else {
+      output$outlier.ref.sites<-rownames(Reference)[-c(nrow(data))][!rownames(Reference)[-c(nrow(data))]%in%rownames(data)]
+    }
+    
+  }
   class(output)<-"tsa.object"
   return(output)
 }

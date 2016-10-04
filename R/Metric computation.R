@@ -258,8 +258,12 @@ add.met<-function (Test,Reference) {
 #' @param Test Vector containing metric scores at the test site. Should be a single row from \code{benth.met} or \code{add.met}.
 #' @param Reference Data frame of metric scores at the reference sites. Should be output from \code{benth.met} or \code{add.met}.
 #' @param Rank Use rank differences in metric selection
+#' @param outbound Used if outlier.rem=T A numeric value between 0 and 1 indicating the outlier boundary for defining values as final outliers (default to 0.1)
 #' @return $Best.Metrics - Vector containing the final selected indicator metrics
 #' @return $Indicative.Metrics - Vector containing all metrics that indicate impairment
+#' @return $raw.data - Data frame containing only selected best metrics
+#' @return $ref.sites - Vector containing input reference site names
+#' @return $outlier.ref.sites - Vector containing sites removed as potential outliers
 #' @keywords Benthic Metrics
 #' @export
 #' @examples
@@ -270,15 +274,15 @@ add.met<-function (Test,Reference) {
 #' "187-T-1","023-T-1","193-T-1","192-T-1","196-T-1","194-T-1")
 #' metric.select(bio.data[201,],bio.data[nn.refsites,])
 
-metric.select <- function (Test,Reference,outlier.rem=T,rank=F) {
+metric.select <- function (Test,Reference,outlier.rem=T,rank=F, outbound=0.1) {
   raw.data1<-rbind(Reference,Test)
   raw.data<-tsa.zscore(Test=Test,Reference=Reference)
-  raw.data[is.nan(as.matrix(raw.data))]<-0
+  #raw.data[is.nan(as.matrix(raw.data))]<-0
 
   if (outlier.rem==T) {
-    Reference<-Reference[,apply(Reference, 2, mad)!=0]
-    Reference<-Reference[c(which(pcout(Reference,outbound=0.1)$wfinal01==1)),]
-    raw.data<-tsa.zscore(Test[,colnames(Reference)],Reference)
+    Reference<-Reference[,which(apply(Reference, 2, mad)!=0 & !is.na(apply(Reference, 2, mad)!=0))]
+    Reference<-Reference[c(which(pcout(Reference,outbound=outbound)$wfinal01==1)),]
+    raw.data<-tsa.zscore(Test[,colnames(Test)%in%colnames(Reference)],Reference[,colnames(Reference)%in%colnames(Test)])
   }
 
   nRef<-nrow(raw.data)-1
@@ -393,7 +397,12 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F) {
   metric.auto<-NULL
   metric.auto$Best.Metrics<-test.var
   metric.auto$Indicative.Metrics<-indicative.metrics
-  metric.auto$raw.data<-raw.data1[,colnames(raw.data1) %in% test.var]
+  metric.auto$raw.data<-raw.data1[rownames(raw.data),colnames(raw.data1) %in% test.var]
+  metric.auto$ref.sites<-rownames(raw.data1)[-c(nrow(raw.data1))]
+  if (outlier.rem){
+    metric.auto$outlier.ref.sites<-rownames(raw.data1)[-c(nrow(raw.data1))][!rownames(raw.data1)[-c(nrow(raw.data1))]%in%rownames(Reference)]
+    metric.auto$raw.data.with.outliers<-raw.data1[,colnames(raw.data1) %in% test.var]
+  }
   class(metric.auto)<-"met.sel"
   return(metric.auto)
 }

@@ -140,7 +140,7 @@ site.match<-function(Test, Reference, k=NULL, adaptive=T, RDA.reference=NULL) {
       }
     }
     if (mean(anna.dist[1:k])>mean(anna.dist[1:length(l)])) {
-      warning("Some reference sites may be poorly matched ecologically to test site. Examone plot for confirmation. Consider using adaptive nearest-neighbour breaks.")
+      warning("Some reference sites may be poorly matched ecologically to test site. Examine plot for confirmation. Consider using adaptive nearest-neighbour breaks.")
     }
     final.dist<-anna.dist[1:k]
   }

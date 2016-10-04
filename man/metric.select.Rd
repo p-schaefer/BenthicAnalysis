@@ -4,12 +4,14 @@
 \alias{metric.select}
 \title{Indicator metric selection}
 \usage{
-metric.select(Test, Reference, outlier.rem = T, rank = F)
+metric.select(Test, Reference, outlier.rem = T, rank = F, outbound = 0.1)
 }
 \arguments{
 \item{Test}{Vector containing metric scores at the test site. Should be a single row from \code{benth.met} or \code{add.met}.}
 
 \item{Reference}{Data frame of metric scores at the reference sites. Should be output from \code{benth.met} or \code{add.met}.}
+
+\item{outbound}{Used if outlier.rem=T A numeric value between 0 and 1 indicating the outlier boundary for defining values as final outliers (default to 0.1)}
 
 \item{Rank}{Use rank differences in metric selection}
 }
@@ -17,6 +19,12 @@ metric.select(Test, Reference, outlier.rem = T, rank = F)
 $Best.Metrics - Vector containing the final selected indicator metrics
 
 $Indicative.Metrics - Vector containing all metrics that indicate impairment
+
+$raw.data - Data frame containing only selected best metrics
+
+$ref.sites - Vector containing input reference site names
+
+$outlier.ref.sites - Vector containing sites removed as potential outliers
 }
 \description{
 Determines which indicator metrics which best differentiate the test site from its nearest-neighbbour reference sites. Metrics that indicate impairment will be
