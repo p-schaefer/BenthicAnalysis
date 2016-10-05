@@ -62,11 +62,11 @@ shinyUI(
                                                         value = 2),
                                            br(),
                                            "-------------------------------------",
-                                           br(),
-                                           conditionalPanel("input.metdata==false",downloadButton('downloadmetricData', 'Export  Metrc Data'))
+                                           br()
+                                           #conditionalPanel("input.metdata==false",downloadButton('downloadmetricData', 'Export  Metrc Data'))
                                          ),
                                          mainPanel(
-                                           tabsetPanel(types="tabs",
+                                           tabsetPanel(type="tabs",
                                                        tabPanel("Taxa Data", dataTableOutput("bio.data.view")),
                                                        tabPanel("Metric Data", dataTableOutput("metric.data.view")),
                                                        tabPanel("Metric Summary", verbatimTextOutput("metric.summary.view"))
@@ -82,11 +82,14 @@ shinyUI(
                               tabPanel("Transform Biological Data",
                                        sidebarLayout(
                                          sidebarPanel(
+                                           
+                                           #selectInput('in3', 'Options', state.name, multiple=TRUE, selectize=FALSE)
                                          ),
                                          mainPanel(
                                          )
                                        )),
                               
+
                               #########################################################
                               #Input Environmental Data
                               ########################################################
@@ -106,7 +109,7 @@ shinyUI(
                                            downloadButton('downloadenvData', 'Export Environmental Data')
                                          ),
                                          mainPanel(
-                                           tabsetPanel(types="tabs",
+                                           tabsetPanel(type="tabs",
                                                        tabPanel("Environmental Data", dataTableOutput("env.data.view")),
                                                        tabPanel("Environmental Data Summary", verbatimTextOutput("env.summary.view")),
                                                        tabPanel(title="Reference Site Matches",tableOutput("usersitematch.table"))
@@ -132,7 +135,7 @@ shinyUI(
                                            
                                          ),
                                          mainPanel(
-                                           tabsetPanel(types="tabs",
+                                           tabsetPanel(type="tabs",
                                                        tabPanel(title="Select Reference Sites",conditionalPanel("output.usersitematchwasmodified==0",helpText("User matched reference sites detected. Making changes here will disallow further use of user matched reference sites")),uiOutput("choose_columns")),
                                                        tabPanel(title="Selected Reference Sites",verbatimTextOutput("selrefID")),
                                                        tabPanel(title="Selected Test Sites",verbatimTextOutput("seltestID"))
@@ -186,7 +189,7 @@ shinyUI(
                                     numericInput("k.sel", label = h4(""), value = 0)
                                 ),
                                 mainPanel(
-                                  tabsetPanel(types="tabs",
+                                  tabsetPanel(type="tabs",
                                               
                                               tabPanel(title="Ordination Plot",
                                                        plotOutput("nn.ord",
@@ -222,7 +225,7 @@ shinyUI(
                                                             conditionalPanel("output.nnmethodselected==1",checkboxInput("mselect","Automatically select indicator metrics for analysis?",value=F)))
                                          ),
                                          mainPanel(
-                                           tabsetPanel(types="tabs",
+                                           tabsetPanel(type="tabs",
                                                        tabPanel(title="Select Indicator Metrics",uiOutput("choose_columns1"))
                                            )
                                          )
@@ -244,7 +247,7 @@ shinyUI(
                                            br()
                                          ),
                                          mainPanel(
-                                           tabsetPanel(types="tabs",
+                                           tabsetPanel(type="tabs",
                                                        tabPanel(title="Mahalanobis Distance Plot",
                                                                 plotOutput("tsa.distplot",height=600)),
                                                        tabPanel(title="Indicator Metric Boxplots",
@@ -256,7 +259,7 @@ shinyUI(
                                                        tabPanel(title="Selected Metrics",
                                                                 conditionalPanel("input.mselect==true",verbatimTextOutput("print.sel.met"))),
                                                        tabPanel(title="Tables",
-                                                                tabsetPanel(types="pills",
+                                                                tabsetPanel(type="pills",
                                                                              tabPanel(title="TSA Results",verbatimTextOutput("tsa.results")),
                                                                              tabPanel(title="Partial TSA Results",verbatimTextOutput("ptsa.results")),
                                                                              tabPanel(title="Jacknife Consistency", verbatimTextOutput("tsa.jack"))
@@ -277,7 +280,7 @@ shinyUI(
                               
                               tabPanel("Configure",
                                          mainPanel(
-                                           tabsetPanel(types="tabs",
+                                           tabsetPanel(type="tabs",
                                              tabPanel(title="Options",
                                                       fluidRow(wellPanel(
                                                         uiOutput("batch.nn.method"))
