@@ -1,4 +1,4 @@
-#left off trying to gut user site matching to work lin 492
+#left off working on metric transformations
 
 shinyServer(function(input, output, session) {
   #########################################################
@@ -90,6 +90,75 @@ shinyServer(function(input, output, session) {
       write.csv(bio.data()$Summary.Metrics, file)
     }
   )
+  
+  #######################################################################
+  #Transform Biological Data
+  #######################################################################
+  
+  output$sel.met.for.trans<-renderUI({
+    if (is.null(bio.data())){
+      helpText("Input data required")
+    }
+    selectInput('met.for.trans',label=h4("Select") ,choices=colnames(bio.data()$Summary.Metrics), multiple=F, selectize=FALSE)
+  })
+  
+  met.for.trans<-reactive({
+    met.for.trans<-input$met.for.trans
+    if (is.null(bio.data())){
+      return(NULL)
+    } else{
+      met.for.trans
+    }
+  })
+  
+  trans.metric<-reactive({
+    
+    validate(
+      need(if (input$trans=="Log10" & any(bio.data()$Summary.Metrics[,met.for.trans()]==0)) {FALSE} else {TRUE}, "Metric contains 0's, try log10(x+1)"),
+      need(if (input$trans=="Inverse" & any(bio.data()$Summary.Metrics[,met.for.trans()]==0)) {FALSE} else {TRUE}, "Metric contains 0's"),
+      need(if (input$trans=="Arcsine Sqare Root" & (bio.data()$Summary.Metrics[,met.for.trans()]<=0 && (bio.data()$Summary.Metrics[,met.for.trans()]>=1))) {FALSE} else {TRUE}, "Transofmration only available for values between 0-1")
+    )
+    
+
+    if (input$trans=="None"){
+      t.metric<-bio.data()$Summary.Metrics[,met.for.trans()]
+    }
+    if (input$trans=="Log10"){
+      t.metric<-log(bio.data()$Summary.Metrics[,met.for.trans()])
+    }
+    if (input$trans=="Log10+1" ){
+      t.metric<-log(bio.data()$Summary.Metrics[,met.for.trans()]+1)
+    }
+    if (input$trans=="Square Root" ){
+      t.metric<-sqrt(bio.data()$Summary.Metrics[,met.for.trans()])
+    }
+    if (input$trans=="Inverse" ){
+      t.metric<-1/(bio.data()$Summary.Metrics[,met.for.trans()])
+    }
+    if (input$trans=="Arcsine Sqare Root"){
+      t.metric<-asin(sqrt(bio.data()$Summary.Metrics[,met.for.trans()]))
+    }
+    t.metric
+  })
+  
+  output$met.trans.plot1<-renderPlot({
+    validate(
+      need(met.for.trans() != "", "Please select a metric")
+    )
+    hist(as.numeric(trans.metric()),prob=F,col="grey", main=paste0(input$trans," ",met.for.trans()), xlab="")
+    #lines(density(as.numeric(bio.data()$Summary.Metrics[,met.for.trans()])),lwd=2,col="blue")
+  })
+  
+  output$met.trans.plot2<-renderPlot({
+    validate(
+      need(met.for.trans() != "", "Please select a metric")
+    )
+    qqnorm(as.numeric(trans.metric()), main=paste0(input$trans," ",met.for.trans()), xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
+    qqline(as.numeric(trans.metric()), datax = FALSE, distribution = qnorm, probs = c(0.25, 0.75), qtype = 7)
+  })
+  
+  
+  
   
   #########################################################
   #Input Environmental Data
@@ -450,6 +519,12 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }
     if (method=="RDA-ANNA"){
+      validate(
+        need((input$site.axis1 != "" & 
+                input$site.axis2 != "" &
+                nn.sites() != ""), "Please select an axis")
+      )
+      
       final.dist<-nn.sites()$final.dist
       anna.dist<-nn.sites()$all.dist
       anna.ref<-nn.sites()$ref.scores
@@ -472,6 +547,12 @@ shinyServer(function(input, output, session) {
            cex=0.8,col="red")
     }
     if (method=="ANNA"){
+      validate(
+        need((input$site.axis1 != "" & 
+                input$site.axis2 != "" &
+                nn.sites() != ""), "Please select an axis")
+      )
+      
       final.dist<-nn.sites()$final.dist
       anna.dist<-nn.sites()$all.dist
       anna.ref<-nn.sites()$ref.scores

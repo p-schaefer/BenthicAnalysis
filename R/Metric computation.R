@@ -145,6 +145,7 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
 
   summ[is.nan.data.frame(summ)]<-NA
   summ[is.inf.data.frame(summ)]<-NA
+  summ<-summ[,colSums(summ,na.rm=T)>0]
 
   output<-NULL
   output$Summary.Metrics<-summ

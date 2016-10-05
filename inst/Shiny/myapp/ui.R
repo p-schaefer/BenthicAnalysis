@@ -82,10 +82,16 @@ shinyUI(
                               tabPanel("Transform Biological Data",
                                        sidebarLayout(
                                          sidebarPanel(
+                                           uiOutput("sel.met.for.trans"),
+                                           radioButtons("trans", label = h3("Transformation"),
+                                                        choices = list("None" = "None", "Log10" = "Log10", "Log10+1" = "Log10+1", "Square Root" = "Square Root", "Inverse" = "Inverse", "Arcsine Sqare Root"= "Arcsine Sqare Root"), 
+                                                        selected = "None")
                                            
-                                           #selectInput('in3', 'Options', state.name, multiple=TRUE, selectize=FALSE)
                                          ),
                                          mainPanel(
+                                           plotOutput("met.trans.plot1"),
+                                           plotOutput("met.trans.plot2")
+                                           
                                          )
                                        )),
                               
