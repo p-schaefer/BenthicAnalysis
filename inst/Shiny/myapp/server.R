@@ -1,4 +1,7 @@
 #left off working on metric transformations
+#Add "colnames<-c(colnames(bio.data.t$Summary.Metrics),colnames[(length(colnames)-3):length(colnames)])" at metric selection (met.sel)
+#fix anywhere where add.met is used - will need to update metric names based on transfomrations
+
 
 shinyServer(function(input, output, session) {
   #########################################################

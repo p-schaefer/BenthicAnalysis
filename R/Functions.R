@@ -499,6 +499,8 @@ is.nan.data.frame <- function(x) #is.nan function applied to data.frames
 is.inf.data.frame <- function(x) #is.nan function applied to data.frames
   do.call(cbind, lapply(x, is.infinite))
 
+#' @export
+my.sum <- function(x) ifelse( !all(is.na(x)), sum(x, na.rm=T), NA)
 
 #' @export
 range01 <- function(x){(x - min(x)) / (max(x) - min(x))}
