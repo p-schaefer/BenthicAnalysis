@@ -57,6 +57,10 @@
 
 
 tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=T, m.select=T,rank=F,na.cutoff=0.7,outbound=0.1) {
+  Reference<-Reference[rowSums(is.na(Reference))!=ncol(Reference), ]
+  raw.data1<-rbind(Reference,Test)
+  
+  
   if (any((colnames(Test)%in%colnames(Reference))==F)|
       (ncol(Test)!=ncol(Reference))) {
     stop("Metric mismatch between test site and reference set")
@@ -277,18 +281,27 @@ tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=T, m.select=T,ra
   } 
   
   output$z.scores<-tsa.zscore(Test=Test,Reference=Reference[rownames(data)[-c(nrow(data))],])
-  output$raw.data<-rbind(Reference[rownames(data)[-c(nrow(data))],],Test)
   output$outlier.rem<-outlier.rem
   output$m.select<-m.select
   output$ref.sites<-rownames(Reference)
   output$test.site<-rownames(Test)
   if (outlier.rem) {
     if (m.select) {
+      output$raw.data<-metric.select.object$raw.data
       output$outlier.ref.sites<-metric.select.object$outlier.ref.sites
+      output$raw.data.with.outliers<-raw.data1
     } else {
+      output$raw.data<-raw.data1[rownames(Reference)[-c(nrow(data))]%in%rownames(data),]
       output$outlier.ref.sites<-rownames(Reference)[-c(nrow(data))][!rownames(Reference)[-c(nrow(data))]%in%rownames(data)]
+      output$raw.data.with.outliers<-raw.data1
     }
     
+  } else {
+    if (m.select) {
+      output$raw.data<-metric.select.object$raw.data
+    } else {
+      output$raw.data<-raw.data1[rownames(Reference)[-c(nrow(data))]%in%rownames(data),]
+    }
   }
   class(output)<-"tsa.object"
   return(output)

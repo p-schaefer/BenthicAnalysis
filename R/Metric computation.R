@@ -281,6 +281,9 @@ add.met<-function (Test,Reference) {
 #' metric.select(bio.data[201,],bio.data[nn.refsites,])
 
 metric.select <- function (Test,Reference,outlier.rem=T,rank=F, outbound=0.1) {
+  Reference<-Reference[rowSums(is.na(Reference))!=ncol(Reference), !is.na(Test)]
+  Test<-Test[,!is.na(Test)]
+  
   raw.data1<-rbind(Reference,Test)
   raw.data<-tsa.zscore(Test=Test,Reference=Reference)
   #raw.data[is.nan(as.matrix(raw.data))]<-0
@@ -294,20 +297,6 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F, outbound=0.1) {
   nRef<-nrow(raw.data)-1
   nInd<-ncol(raw.data)
   test.var<-NULL
-
-  hg<-c("Richness","Simpson","Shannon","Intolerants Richness","Percent Intolerants","Percent EPT","EPT Richness","Ephem Richness",
-        "Percent Ephem","Plec Richness","Percent Plec","Trich Richness","Percent Trich","EPT per EPT and Chir",
-        "Percent Non Chir Dip" , "O:E", "Bray-Curtis","CA1","CA2")
-
-  hb<-c("Percent Dominance","Percent Oligochaeta","Percent Chironomidae","Percent Isopoda","Percent Amphipoda","FBI",
-        "Trich as Hydropsychidae","Ephem as Baetidae","Percent Coleoptera","HBI", "Percent CIGH","CA1","CA2", "Coleo as Elmidae")
-
-  lg<-c("Percent Dominance","Percent Oligochaeta","Percent Chironomidae","Percent Isopoda","Percent Amphipoda","FBI",
-        "Trich as Hydropsychidae","Ephem as Baetidae","Percent Coleoptera", "HBI", "Percent CIGH","CA1","CA2", "Coleo as Elmidae")
-
-  lb<-c("Richness","Simpson","Shannon","Intolerants Richness","Percent Intolerants","Percent EPT","EPT Richness","Ephem Richness",
-        "Percent Ephem","Plec Richness","Percent Plec","Trich Richness","Percent Trich","EPT per EPT and Chir",
-        "Percent Non Chir Dip", "O:E", "Bray-Curtis" ,"CA1","CA2")
 
   #This loops through each metric and removes metrics that have fewer than 25% unique variables
   restricted.metrics<-NULL
@@ -362,17 +351,17 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F, outbound=0.1) {
     if (("O:E" %in% colnames(raw.data)) & !("O:E" %in% test.var)) {
       test.var<-c(test.var,"O:E")
     }
-    if (("Percent Dominance" %in% colnames(raw.data)) & !("Percent Dominance" %in% test.var)) {
-      test.var<-c(test.var,"Percent Dominance")
+    if (("Percent.Dominance" %in% colnames(raw.data)) & !("Percent.Dominance" %in% test.var)) {
+      test.var<-c(test.var,"Percent.Dominance")
     }
     if (("Richness" %in% colnames(raw.data)) & !("Richness" %in% test.var)) {
       test.var<-c(test.var,"Richness")
     }
-    if (("Percent EPT" %in% colnames(raw.data)) & !("Percent EPT" %in% test.var)) {
-      test.var<-c(test.var,"Percent EPT")
+    if (("Percent.mEPT" %in% colnames(raw.data)) & !("Percent.mEPT" %in% test.var)) {
+      test.var<-c(test.var,"Percent.mEPT")
     }
-    if (("Percent Chironomidae" %in% colnames(raw.data)) & !("Percent Chironomidae" %in% test.var)) {
-      test.var<-c(test.var,"Percent Chironomidae")
+    if (("Percent.Chironomidae" %in% colnames(raw.data)) & !("Percent.Chironomidae" %in% test.var)) {
+      test.var<-c(test.var,"Percent.Chironomidae")
     }
   }
 
@@ -383,17 +372,17 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F, outbound=0.1) {
     if (("O:E" %in% colnames(data)) & !("O:E" %in% test.var)) {
       test.var<-c(test.var,"O:E")
     }
-    if (("Percent Dominance" %in% colnames(data)) & !("Percent Dominance" %in% test.var)) {
-      test.var<-c(test.var,"Percent Dominance")
+    if (("Percent.Dominance" %in% colnames(data)) & !("Percent.Dominance" %in% test.var)) {
+      test.var<-c(test.var,"Percent.Dominance")
     }
     if (("Richness" %in% colnames(data)) & !("Richness" %in% test.var)) {
       test.var<-c(test.var,"Richness")
     }
-    if (("Percent EPT" %in% colnames(data)) & !("Percent EPT" %in% test.var)) {
-      test.var<-c(test.var,"Percent EPT")
+    if (("Percent.mEPT" %in% colnames(data)) & !("Percent.mEPT" %in% test.var)) {
+      test.var<-c(test.var,"Percent.mEPT")
     }
-    if (("Percent Chironomidae" %in% colnames(data)) & !("Percent Chironomidae" %in% test.var)) {
-      test.var<-c(test.var,"Percent Chironomidae")
+    if (("Percent.Chironomidae" %in% colnames(data)) & !("Percent.Chironomidae" %in% test.var)) {
+      test.var<-c(test.var,"Percent.Chironomidae")
     }
   }
 
@@ -402,7 +391,7 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F, outbound=0.1) {
 
   metric.auto<-NULL
   metric.auto$Best.Metrics<-test.var
-  metric.auto$Indicative.Metrics<-indicative.metrics
+  #metric.auto$Indicative.Metrics<-indicative.metrics
   metric.auto$raw.data<-raw.data1[rownames(raw.data),colnames(raw.data1) %in% test.var]
   metric.auto$ref.sites<-rownames(raw.data1)[-c(nrow(raw.data1))]
   if (outlier.rem){
@@ -416,7 +405,7 @@ metric.select <- function (Test,Reference,outlier.rem=T,rank=F, outbound=0.1) {
 print.met.sel<-function(met.sel){
   cat("Selected Metrics:\n")
   print(met.sel$Best.Metrics)
-  cat("\n")
-  cat("All indicative metrics:\n")
-  print(met.sel$Indicative.Metrics)
+  #cat("\n")
+  #cat("All indicative metrics:\n")
+  #print(met.sel$Indicative.Metrics)
 }

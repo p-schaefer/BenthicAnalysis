@@ -252,7 +252,13 @@ shinyUI(
                                            br(),
                                            checkboxInput("distance","Use ecological distance to weigh Mahalanobis Distance?",value=F),
                                            checkboxInput("outlier.rem","Remove outlier reference sites?",value=F),
-                                           br()
+                                           conditionalPanel("input['outlier.rem']==true",sliderInput("outbound.input",label="Boundary for defining outliers",min=0,max=0.8,step=0.05,value=0.15)),
+                                           br(),
+                                           h4("Selected Reference Sites"),
+                                           tableOutput("display.ref.sites"),
+                                           br(),
+                                           conditionalPanel("input['outlier.rem']==true",h4("Outlier Reference Sites")),
+                                           conditionalPanel("input['outlier.rem']==true",tableOutput("display.outlier.ref.sites"))
                                          ),
                                          mainPanel(
                                            tabsetPanel(type="tabs",

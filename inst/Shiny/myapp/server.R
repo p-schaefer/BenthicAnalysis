@@ -89,6 +89,7 @@ shinyServer(function(input, output, session) {
       #output$testing<-renderTable({d$Summary.Metrics})
       }
   })
+  
 
   output$bio.data.view <- renderDataTable({
     bio.data()$Raw.Data1
@@ -360,6 +361,9 @@ shinyServer(function(input, output, session) {
       }
       
       if (any(bio.data()$Site.List%in%x[,1]==F)) {
+        validate(
+          need(if(any(bio.data()$Site.List%in%x[,1]==F)){FALSE}else{TRUE},"Site name mismatch between biological data and environmental data")
+        )
         stop("Site name mismatch between biological data and environmental data")
       } else {
       }
@@ -525,16 +529,23 @@ shinyServer(function(input, output, session) {
     }
     sel.mets<-sel.mets()
     if (is.null(sel.mets) & nn.method()=="RDA-ANNA"){
+      validate(
+        need(if(is.null(sel.mets) & nn.method()=="RDA-ANNA"){FALSE}else{TRUE},"Must select indicator metrics before RDA-ANNA is possible")
+      )
       stop("Must select indicator metrics before RDA-ANNA is possible")
       return(NULL)
     }
     if (!use.user.site.match()) {
       if (!is.null(env.data())) {
-        nn.sites<-site.match(Test=env.data()[which(env.data()[,"Sites"]%in%test.site()),-c(1)],
-                             Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
-                             k= if (k()!=0 & k()<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) k() else NULL,
-                             adaptive=adaptive(),
-                             RDA.reference = if (nn.method()=="RDA-ANNA") {bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),sel.mets]} else {NULL} )
+        
+        nn.sites<-try(site.match(Test=env.data()[which(env.data()[,"Sites"]%in%test.site()),-c(1)],
+                                 Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
+                                 k= if (k()!=0 & k()<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) k() else NULL,
+                                 adaptive=adaptive(),
+                                 RDA.reference = if (nn.method()=="RDA-ANNA") {bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),sel.mets]} else {NULL} ),silent=T)
+        validate(
+          need(!(is(nn.sites,"try-error")),paste0(attr(nn.sites,"condition")$message))
+        )
         nn.sites
       } else {
         return(NULL)
@@ -542,11 +553,14 @@ shinyServer(function(input, output, session) {
 
     } else {
       if (!is.null(env.data())) {
-        nn.sites<-site.match(Test=env.data()[which(env.data()[,"Sites"]%in%test.site()),-c(1)],
+        nn.sites<-try(site.match(Test=env.data()[which(env.data()[,"Sites"]%in%test.site()),-c(1)],
                              Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
                              k= if (k()!=0 & k()<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) k() else NULL,
-                             adaptive=adaptive(),
-                             RDA.reference = if (nn.method()=="RDA-ANNA") {bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),sel.mets]} else {NULL})
+                             adaptive=adaptive(), RDA.reference = if (nn.method()=="RDA-ANNA") {bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),sel.mets]} else {NULL}),silent=T)
+        validate(
+          need(!(is(nn.sites,"try-error")),paste0(attr(nn.sites,"condition")$message))
+        )
+
         nn.sites$final.dist<-NULL
         nn.sites$final.dist<-nn.sites$all.dist[paste(unlist(user.site.match()[which(user.site.match()[,1]%in%test.site()),2:length(which(user.site.match()[which(user.site.match()[,1]%in%test.site()),]!=""))]))]
         nn.sites
@@ -758,38 +772,64 @@ shinyServer(function(input, output, session) {
   distance<-reactive({input$distance})
   outlier.rem<-reactive({input$outlier.rem})
   m.select<-reactive({input$mselect})
-
+  outbound<-reactive({as.numeric(input$outbound.input)})
+  
   
   tsa.results<-reactive({
     if (is.null(nn.sites())){
       return(NULL)
     }
     if (input$metdata==T & input$mselect==T) {
+      
+      validate(
+        need(if(input$metdata==T & input$mselect==T){FALSE}else{TRUE},"Automated metric selection not available when input data are indicator metrics")
+      )
       stop("Automated metric selection not available when input data are indicator metrics")
     }
     
     if (input$distance==T & is.null(env.data())){
+      validate(
+        need(if(input$distance==T & is.null(env.data())){FALSE}else{TRUE},"Weighing by ecological distance requires ecological data")
+      )
       stop("Weighing by ecological distance requires ecological data")
     }
     
     if (input$metdata==F){
-      tsa.results<-tsa.test(Test=add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])[(1+length(nn.sites()$final.dist)),sel.mets()],
+      tsa.results<-try(tsa.test(Test=add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])[(1+length(nn.sites()$final.dist)),sel.mets()],
                             Reference=add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])[1:length(nn.sites()$final.dist),sel.mets()],
                             distance= if (distance()) nn.sites()$final.dist else NULL,
                             outlier.rem= outlier.rem(),
                             m.select= m.select(),
-                            na.cutoff=0.7)
+                            na.cutoff=0.7,outbound=outbound()),silent=T)
+      validate(
+        need(!(is(tsa.results,"try-error")),paste0(attr(tsa.results,"condition")$message))
+      )
+      
       tsa.results
     } else {
       taxa.data<-rbind(bio.data()$Summary.Metrics[names(nn.sites()$final.dist),],bio.data()$Summary.Metrics[test.site(),])
-      tsa.results<-tsa.test(Test=taxa.data[(1+length(nn.sites()$final.dist)),sel.mets()],
+      tsa.results<-try(tsa.test(Test=taxa.data[(1+length(nn.sites()$final.dist)),sel.mets()],
                             Reference=taxa.data[1:length(nn.sites()$final.dist),sel.mets()],
                             distance= if (distance()) nn.sites()$final.dist else NULL,
                             outlier.rem= outlier.rem(),
                             m.select= m.select(),
-                            na.cutoff=0.7)
+                            na.cutoff=0.7,outbound=outbound()),silent=T)
+      validate(
+        need(!(is(tsa.results,"try-error")),paste0(attr(tsa.results,"condition")$message))
+      )
       tsa.results
     }
+  })
+  
+  output$display.ref.sites<-renderText({
+    matrix(tsa.results()$ref.sites)
+  })
+  
+  output$display.outlier.ref.sites<-renderText({
+    validate(
+      need(outlier.rem(),"")
+    )
+    matrix(tsa.results()$outlier.ref.sites)
   })
   
   output$tsa.distplot<-renderPlot({
@@ -960,11 +1000,20 @@ shinyServer(function(input, output, session) {
     if (is.null(tsa.results())){
       return(NULL)
     }
-    Reference<-tsa.results()$raw.data[names(nn.sites()$final.dist),]
-    nRef<-nrow(Reference)
-    Test<-tsa.results()$raw.data[test.site(),]
+    if (outlier.rem()){
+      Reference<-tsa.results()$raw.data.with.outliers[names(nn.sites()$final.dist),]
+      Test<-tsa.results()$raw.data.with.outliers[test.site(),]
+    } else {
+      Reference<-tsa.results()$raw.data[names(nn.sites()$final.dist),]
+      Test<-tsa.results()$raw.data[test.site(),]
+    }
     
-    sel.met<-metric.select(Test=Test,Reference=Reference,outlier.rem = outlier.rem())
+    sel.met<-try(metric.select(Test=Test,Reference=Reference,outlier.rem = outlier.rem(), rank=F,outbound= if(outlier.rem()){outbound()}else {0}),silent=T)
+    
+    validate(
+      need(!(is(sel.met,"try-error")),paste0(attr(sel.met,"condition")$message))
+    )
+    
     sel.met
   })
   
