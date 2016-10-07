@@ -9,6 +9,7 @@ shinyServer(function(input, output, session) {
   #Input biological Data
   ########################################################
   
+  #bio.data<-reactiveValues()
   bio.data<- reactive({
     inbioFile <- input$inbioFile
     if (is.null(inbioFile)){
@@ -20,7 +21,13 @@ shinyServer(function(input, output, session) {
         colnames(d$Raw.Data1)[1]<-"Sites"
         d$Summary.Metrics1<-cbind(d$Site.List,d$Summary.Metrics)
         colnames(d$Summary.Metrics1)[1]<-"Sites"
+        d$untransformed.metrics<-d$Summary.Metrics1
+        d$transformations<-matrix(ncol=2,nrow=ncol(d$Summary.Metrics))
+        d$transformations[1:ncol(d$Summary.Metrics),2]<-rep("None",ncol(d$Summary.Metrics))
+        d$transformations[1:ncol(d$Summary.Metrics),1]<-colnames(d$Summary.Metrics)
+        colnames(d$transformations)<-c("Metric","Transformation")
         d
+        
       } else {
         x<-read.csv(inbioFile$datapath, header=T,strip.white=TRUE)
         site.fields<-input$site.names
@@ -37,8 +44,14 @@ shinyServer(function(input, output, session) {
           d$Raw.Data1<-NULL
           d$Summary.Metrics1<-cbind(d$Site.List,d$Summary.Metrics)
           colnames(d$Summary.Metrics1)[1]<-"Sites"
+          d$untransformed.metrics<-d$Summary.Metrics1
+          d$transformations<-matrix(ncol=2,nrow=ncol(d$Summary.Metrics))
+          d$transformations[1:ncol(d$Summary.Metrics),2]<-rep("None",ncol(d$Summary.Metrics))
+          d$transformations[1:ncol(d$Summary.Metrics),1]<-colnames(d$Summary.Metrics)
+          colnames(d$transformations)<-c("Metric","Transformation")
           class(d)<-"benth.metric"
           d
+          
         } else if (site.fields==1){
           site.names<-x[1:nrow(x),1]
           taxa<-data.frame(x)
@@ -51,6 +64,11 @@ shinyServer(function(input, output, session) {
           d$Raw.Data1<-NULL
           d$Summary.Metrics1<-d$Summary.Metrics
           colnames(d$Summary.Metrics1)[1]<-"Sites"
+          d$untransformed.metrics<-d$Summary.Metrics1
+          d$transformations<-matrix(ncol=2,nrow=ncol(d$Summary.Metrics))
+          d$transformations[1:ncol(d$Summary.Metrics),2]<-rep("None",ncol(d$Summary.Metrics))
+          d$transformations[1:ncol(d$Summary.Metrics),1]<-colnames(d$Summary.Metrics)
+          colnames(d$transformations)<-c("Metric","Transformation")
           class(d)<-"benth.metric"
           d
           
@@ -61,9 +79,16 @@ shinyServer(function(input, output, session) {
         #  taxa<-data.frame(apply(taxa,2,as.numeric))
         #}
       }
-    }
+      #observeEvent(input$apply.trans,{
+      #  if (bio.data.t$modified=="YES"){
+      #    d<-reactiveValuesToList(bio.data.t)
+      #    #class(d)<-"benth.metric"
+      #    d
+      #  }
+      #})
+      #output$testing<-renderTable({d$Summary.Metrics})
+      }
   })
-  
 
   output$bio.data.view <- renderDataTable({
     bio.data()$Raw.Data1
@@ -99,7 +124,7 @@ shinyServer(function(input, output, session) {
     if (is.null(bio.data())){
       helpText("Input data required")
     }
-    selectInput('met.for.trans',label=h4("Select") ,choices=colnames(bio.data()$Summary.Metrics), multiple=F, selectize=FALSE)
+    selectInput('met.for.trans',label=h4("Select") ,choices=colnames(bio.data()$Summary.Metrics), multiple=F, selectize=T)
   })
   
   met.for.trans<-reactive({
@@ -116,34 +141,35 @@ shinyServer(function(input, output, session) {
     validate(
       need(if (input$trans=="Log10" & any(bio.data()$Summary.Metrics[,met.for.trans()]==0)) {FALSE} else {TRUE}, "Metric contains 0's, try log10(x+1)"),
       need(if (input$trans=="Inverse" & any(bio.data()$Summary.Metrics[,met.for.trans()]==0)) {FALSE} else {TRUE}, "Metric contains 0's"),
-      need(if (input$trans=="Arcsine Sqare Root" & (bio.data()$Summary.Metrics[,met.for.trans()]<=0 && (bio.data()$Summary.Metrics[,met.for.trans()]>=1))) {FALSE} else {TRUE}, "Transofmration only available for values between 0-1")
+      need(if (input$trans=="Arcsine Sqare Root" & (bio.data()$Summary.Metrics[,met.for.trans()]<0 || (bio.data()$Summary.Metrics[,met.for.trans()]>1))) {FALSE} else {TRUE}, "Transofmration only available for values between 0-1"),
+      need(input$trans!="Delete","")
     )
-    
 
     if (input$trans=="None"){
-      t.metric<-bio.data()$Summary.Metrics[,met.for.trans()]
+      t.metric<-bio.data()$untransformed.metrics[,met.for.trans()]
     }
     if (input$trans=="Log10"){
-      t.metric<-log(bio.data()$Summary.Metrics[,met.for.trans()])
+      t.metric<-log(bio.data()$untransformed.metrics[,met.for.trans()])
     }
     if (input$trans=="Log10+1" ){
-      t.metric<-log(bio.data()$Summary.Metrics[,met.for.trans()]+1)
+      t.metric<-log(bio.data()$untransformed.metrics[,met.for.trans()]+1)
     }
     if (input$trans=="Square Root" ){
-      t.metric<-sqrt(bio.data()$Summary.Metrics[,met.for.trans()])
+      t.metric<-sqrt(bio.data()$untransformed.metrics[,met.for.trans()])
     }
     if (input$trans=="Inverse" ){
-      t.metric<-1/(bio.data()$Summary.Metrics[,met.for.trans()])
+      t.metric<-1/(bio.data()$untransformed.metrics[,met.for.trans()])
     }
     if (input$trans=="Arcsine Sqare Root"){
-      t.metric<-asin(sqrt(bio.data()$Summary.Metrics[,met.for.trans()]))
+      t.metric<-asin(sqrt(bio.data()$untransformed.metrics[,met.for.trans()]))
     }
     t.metric
   })
   
   output$met.trans.plot1<-renderPlot({
     validate(
-      need(met.for.trans() != "", "Please select a metric")
+      need(met.for.trans() != "", "Please select a metric"),
+      need(input$trans!="Delete", "Metric to be deleted")
     )
     hist(as.numeric(trans.metric()),prob=F,col="grey", main=paste0(input$trans," ",met.for.trans()), xlab="")
     #lines(density(as.numeric(bio.data()$Summary.Metrics[,met.for.trans()])),lwd=2,col="blue")
@@ -151,12 +177,63 @@ shinyServer(function(input, output, session) {
   
   output$met.trans.plot2<-renderPlot({
     validate(
-      need(met.for.trans() != "", "Please select a metric")
+      need(met.for.trans() != "", "Please select a metric"),
+      need(input$trans!="Delete", "Metric to be deleted")
     )
     qqnorm(as.numeric(trans.metric()), main=paste0(input$trans," ",met.for.trans()), xlab = "Theoretical Quantiles", ylab = "Sample Quantiles")
     qqline(as.numeric(trans.metric()), datax = FALSE, distribution = qnorm, probs = c(0.25, 0.75), qtype = 7)
   })
   
+
+  bio.data.t<-reactiveValues()
+  bio.data.t$Summary.Metrics=NULL
+  bio.data.t$transformations=NULL
+  bio.data.t$modified=NULL
+  bio.data.t$Raw.Data<-NULL
+  bio.data.t$Taxa.List<-NULL
+  bio.data.t$Site.List<-NULL
+  bio.data.t$Raw.Data1<-NULL
+  bio.data.t$untransformed.metrics<-NULL
+
+  observeEvent(input$apply.trans,{
+    if(is.null(bio.data.t$modified)){
+      bio.data.t$Summary.Metrics<-bio.data()$Summary.Metrics
+      bio.data.t$transformations<-bio.data()$transformations
+      bio.data.t$Summary.Metrics1<-bio.data()$Summary.Metrics1
+      bio.data.t$Raw.Data<-bio.data()$Raw.Data
+      bio.data.t$Taxa.List<-bio.data()$Taxa.List
+      bio.data.t$Site.List<-bio.data()$Site.List
+      bio.data.t$Raw.Data1<-bio.data()$Raw.Data1
+      bio.data.t$untransformed.metrics<-bio.data()$untransformed.metrics
+      #class(bio.data.t)<-"benth.metric"
+      
+      if (input$trans=="Delete"){
+        bio.data.t$transformations[which(bio.data.t$transformations[,1]%in%met.for.trans()),2]<-paste0(input$trans)
+        bio.data.t$Summary.Metrics<-bio.data.t$Summary.Metrics[,-c(met.for.trans())]
+        bio.data.t$Summary.Metrics1<-bio.data.t$Summary.Metrics1[,-c(met.for.trans())]
+      } else {
+        bio.data.t$transformations[which(bio.data.t$transformations[,1]%in%met.for.trans()),2]<-paste0(input$trans)
+        bio.data.t$Summary.Metrics[,paste0(met.for.trans())]<-trans.metric()
+        bio.data.t$Summary.Metrics1[,paste0(met.for.trans())]<-trans.metric()
+      }
+      
+    } else {
+      if (input$trans=="Delete"){
+        bio.data.t$transformations[which(bio.data.t$transformations[,1]%in%met.for.trans()),2]<-paste0(input$trans)
+        bio.data.t$Summary.Metrics<-bio.data.t$Summary.Metrics[,-which(paste0(met.for.trans())%in%colnames(bio.data.t$Summary.Metrics))]
+        bio.data.t$Summary.Metrics1<-bio.data.t$Summary.Metrics1[,-which(paste0(met.for.trans())%in%colnames(bio.data.t$Summary.Metrics))]
+      } else {
+        bio.data.t$transformations[which(bio.data.t$transformations[,1]%in%met.for.trans()),2]<-paste0(input$trans)
+        bio.data.t$Summary.Metrics[,paste0(met.for.trans())]<-trans.metric()
+        bio.data.t$Summary.Metrics1[,paste0(met.for.trans())]<-trans.metric()
+      }
+    }
+    bio.data.t$modified<-"YES"
+  })
+  
+  output$met.trans.table<-renderTable({
+    bio.data.t$transformations
+  })
   
   
   
@@ -182,6 +259,9 @@ shinyServer(function(input, output, session) {
       }
       
       if (any(bio.data()$Site.List%in%site.names==F)) {
+        validate(
+          need(if(any(bio.data()$Site.List%in%site.names==F)){FALSE}else{TRUE},"Site name mismatch between biological data and environmental data" )
+        )
         stop("Site name mismatch between biological data and environmental data")
       } else {
         d<-d[,-c(1:input$site.names)]
