@@ -69,31 +69,28 @@ shinyUI(
                                            tabsetPanel(type="tabs",
                                                        tabPanel("Taxa Data", dataTableOutput("bio.data.view")),
                                                        tabPanel("Metric Data", dataTableOutput("metric.data.view")),
-                                                       tabPanel("Metric Summary", verbatimTextOutput("metric.summary.view"))
+                                                       tabPanel("Metric Summary", verbatimTextOutput("metric.summary.view")),
+                                                       navbarMenu("Transformations",
+                                                                  tabPanel("Transformations",sidebarLayout(
+                                                                    sidebarPanel(
+                                                                      uiOutput("sel.met.for.trans"),
+                                                                      radioButtons("trans", label = h3("Transformation"),
+                                                                                   choices = list("None" = "None", "Log10" = "Log10", "Log10+1" = "Log10+1", "Square Root" = "Square Root", "Inverse" = "Inverse", "Arcsine Sqare Root"= "Arcsine Sqare Root", "Delete"="Delete"), 
+                                                                                   selected = "None"),
+                                                                      actionButton("apply.trans",label="Apply Selection"),
+                                                                      tableOutput("met.trans.table")
+                                                                      
+                                                                    ),
+                                                                    mainPanel(
+                                                                      plotOutput("met.trans.plot1"),
+                                                                      plotOutput("met.trans.plot2"),
+                                                                      verbatimTextOutput("trans.summary.stats")
+                                                                    )
+                                                                  )),
+                                                                  tabPanel("Transformed Data",dataTableOutput("transformed.data")))
                                                        
+
                                            )
-                                         )
-                                       )),
-                              
-                              #########################################################
-                              #Transform Biological Data
-                              ########################################################
-                              
-                              tabPanel("Transform Biological Data",
-                                       sidebarLayout(
-                                         sidebarPanel(
-                                           uiOutput("sel.met.for.trans"),
-                                           radioButtons("trans", label = h3("Transformation"),
-                                                        choices = list("None" = "None", "Log10" = "Log10", "Log10+1" = "Log10+1", "Square Root" = "Square Root", "Inverse" = "Inverse", "Arcsine Sqare Root"= "Arcsine Sqare Root", "Delete"="Delete"), 
-                                                        selected = "None"),
-                                           actionButton("apply.trans",label="Apply Selection"),
-                                           tableOutput("met.trans.table")
-                                           
-                                         ),
-                                         mainPanel(
-                                           plotOutput("met.trans.plot1"),
-                                           plotOutput("met.trans.plot2"),
-                                           tableOutput("testing")
                                          )
                                        )),
                               

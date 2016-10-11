@@ -1,6 +1,4 @@
-#left off working on metric transformations
-#Add "colnames<-c(colnames(bio.data.t$Summary.Metrics),colnames[(length(colnames)-3):length(colnames)])" at metric selection (met.sel)
-#fix anywhere where add.met is used - will need to update metric names based on transfomrations
+#left off working on combining add.met and met.sel in batch mode
 
 
 shinyServer(function(input, output, session) {
@@ -28,7 +26,7 @@ shinyServer(function(input, output, session) {
         d$transformations<-matrix(ncol=2,nrow=ncol(d$Summary.Metrics))
         d$transformations[1:ncol(d$Summary.Metrics),2]<-rep("None",ncol(d$Summary.Metrics))
         d$transformations[1:ncol(d$Summary.Metrics),1]<-colnames(d$Summary.Metrics)
-        colnames(d$transformations)<-c("Metric","Transformation")
+        colnames(d$transformations)<-c("Metric","Trans")
         d
         
       } else {
@@ -51,7 +49,7 @@ shinyServer(function(input, output, session) {
           d$transformations<-matrix(ncol=2,nrow=ncol(d$Summary.Metrics))
           d$transformations[1:ncol(d$Summary.Metrics),2]<-rep("None",ncol(d$Summary.Metrics))
           d$transformations[1:ncol(d$Summary.Metrics),1]<-colnames(d$Summary.Metrics)
-          colnames(d$transformations)<-c("Metric","Transformation")
+          colnames(d$transformations)<-c("Metric","Trans")
           class(d)<-"benth.metric"
           d
           
@@ -71,7 +69,7 @@ shinyServer(function(input, output, session) {
           d$transformations<-matrix(ncol=2,nrow=ncol(d$Summary.Metrics))
           d$transformations[1:ncol(d$Summary.Metrics),2]<-rep("None",ncol(d$Summary.Metrics))
           d$transformations[1:ncol(d$Summary.Metrics),1]<-colnames(d$Summary.Metrics)
-          colnames(d$transformations)<-c("Metric","Transformation")
+          colnames(d$transformations)<-c("Metric","Trans")
           class(d)<-"benth.metric"
           d
           
@@ -188,6 +186,7 @@ shinyServer(function(input, output, session) {
     qqline(as.numeric(trans.metric()), datax = FALSE, distribution = qnorm, probs = c(0.25, 0.75), qtype = 7)
   })
   
+  
 
   bio.data.t<-reactiveValues()
   bio.data.t$Summary.Metrics=NULL
@@ -198,6 +197,17 @@ shinyServer(function(input, output, session) {
   bio.data.t$Site.List<-NULL
   bio.data.t$Raw.Data1<-NULL
   bio.data.t$untransformed.metrics<-NULL
+  
+  observe({
+    bio.data.t$Summary.Metrics<-bio.data()$Summary.Metrics
+    bio.data.t$transformations<-bio.data()$transformations
+    bio.data.t$Summary.Metrics1<-bio.data()$Summary.Metrics1
+    bio.data.t$Raw.Data<-bio.data()$Raw.Data
+    bio.data.t$Taxa.List<-bio.data()$Taxa.List
+    bio.data.t$Site.List<-bio.data()$Site.List
+    bio.data.t$Raw.Data1<-bio.data()$Raw.Data1
+    bio.data.t$untransformed.metrics<-bio.data()$untransformed.metrics
+  })
 
   observeEvent(input$apply.trans,{
     if(is.null(bio.data.t$modified)){
@@ -213,23 +223,28 @@ shinyServer(function(input, output, session) {
       
       if (input$trans=="Delete"){
         bio.data.t$transformations[which(bio.data.t$transformations[,1]%in%met.for.trans()),2]<-paste0(input$trans)
-        bio.data.t$Summary.Metrics<-bio.data.t$Summary.Metrics[,-c(met.for.trans())]
-        bio.data.t$Summary.Metrics1<-bio.data.t$Summary.Metrics1[,-c(met.for.trans())]
+        bio.data.t$Summary.Metrics<-bio.data.t$Summary.Metrics[,-c(which(colnames(bio.data.t$Summary.Metrics)%in%met.for.trans()))]
+        bio.data.t$Summary.Metrics1<-bio.data.t$Summary.Metrics1[,-c(which(colnames(bio.data.t$Summary.Metrics1)%in%met.for.trans()))]
       } else {
         bio.data.t$transformations[which(bio.data.t$transformations[,1]%in%met.for.trans()),2]<-paste0(input$trans)
-        bio.data.t$Summary.Metrics[,paste0(met.for.trans())]<-trans.metric()
-        bio.data.t$Summary.Metrics1[,paste0(met.for.trans())]<-trans.metric()
+        bio.data.t$Summary.Metrics[,which(colnames(bio.data.t$Summary.Metrics)%in%met.for.trans())]<-trans.metric()
+        bio.data.t$Summary.Metrics1[,which(colnames(bio.data.t$Summary.Metrics1)%in%met.for.trans())]<-trans.metric()
+        colnames(bio.data.t$Summary.Metrics)[which(colnames(bio.data.t$Summary.Metrics)%in%met.for.trans())]<-paste0(input$trans," ",met.for.trans())
+        colnames(bio.data.t$Summary.Metrics1)[which(colnames(bio.data.t$Summary.Metrics1)%in%met.for.trans())]<-paste0(input$trans," ",met.for.trans())
+        
       }
       
     } else {
       if (input$trans=="Delete"){
         bio.data.t$transformations[which(bio.data.t$transformations[,1]%in%met.for.trans()),2]<-paste0(input$trans)
-        bio.data.t$Summary.Metrics<-bio.data.t$Summary.Metrics[,-which(paste0(met.for.trans())%in%colnames(bio.data.t$Summary.Metrics))]
-        bio.data.t$Summary.Metrics1<-bio.data.t$Summary.Metrics1[,-which(paste0(met.for.trans())%in%colnames(bio.data.t$Summary.Metrics))]
+        bio.data.t$Summary.Metrics<-bio.data.t$Summary.Metrics[,-c(which(colnames(bio.data.t$Summary.Metrics)%in%met.for.trans()))]
+        bio.data.t$Summary.Metrics1<-bio.data.t$Summary.Metrics1[,-c(which(colnames(bio.data.t$Summary.Metrics1)%in%met.for.trans()))]
       } else {
         bio.data.t$transformations[which(bio.data.t$transformations[,1]%in%met.for.trans()),2]<-paste0(input$trans)
-        bio.data.t$Summary.Metrics[,paste0(met.for.trans())]<-trans.metric()
-        bio.data.t$Summary.Metrics1[,paste0(met.for.trans())]<-trans.metric()
+        bio.data.t$Summary.Metrics[,which(colnames(bio.data.t$Summary.Metrics)%in%met.for.trans())]<-trans.metric()
+        bio.data.t$Summary.Metrics1[,which(colnames(bio.data.t$Summary.Metrics1)%in%met.for.trans())]<-trans.metric()
+        colnames(bio.data.t$Summary.Metrics)[which(colnames(bio.data.t$Summary.Metrics)%in%met.for.trans())]<-paste0(input$trans," ",met.for.trans())
+        colnames(bio.data.t$Summary.Metrics1)[which(colnames(bio.data.t$Summary.Metrics1)%in%met.for.trans())]<-paste0(input$trans," ",met.for.trans())
       }
     }
     bio.data.t$modified<-"YES"
@@ -239,6 +254,17 @@ shinyServer(function(input, output, session) {
     bio.data.t$transformations
   })
   
+  output$trans.summary.stats<-renderPrint({
+    validate(
+      need(met.for.trans() != "", "Please select a metric"),
+      need(input$trans!="Delete", "Metric to be deleted")
+    )
+    summary(trans.metric())
+  })
+  
+  output$transformed.data<-renderDataTable({
+    bio.data.t$Summary.Metrics1
+  })
   
   
   #########################################################
@@ -246,7 +272,7 @@ shinyServer(function(input, output, session) {
   ########################################################
   
   env.data<-reactive({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     }
     inenvFile <- input$inenvFile
@@ -262,9 +288,9 @@ shinyServer(function(input, output, session) {
         site.names<-d[,1]
       }
       
-      if (any(bio.data()$Site.List%in%site.names==F)) {
+      if (any(bio.data.t$Site.List%in%site.names==F)) {
         validate(
-          need(if(any(bio.data()$Site.List%in%site.names==F)){FALSE}else{TRUE},"Site name mismatch between biological data and environmental data" )
+          need(if(any(bio.data.t$Site.List%in%site.names==F)){FALSE}else{TRUE},"Site name mismatch between biological data and environmental data" )
         )
         stop("Site name mismatch between biological data and environmental data")
       } else {
@@ -278,14 +304,14 @@ shinyServer(function(input, output, session) {
   })
   
   output$env.data.view <- renderDataTable({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     }
     env.data()
   })
   
   output$env.summary.view <- renderPrint({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     }
     summary(env.data())
@@ -308,7 +334,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }
     x<-data.frame(read.csv(inuser.site.matchFile$datapath, header=T,strip.white=TRUE))
-    if (any(as.vector(x[,1])%in%bio.data()$Site.List==F)) {
+    if (any(as.vector(x[,1])%in%bio.data.t$Site.List==F)) {
       stop("Site mismatch between biological data and user site matched data")
     } 
     if (any(apply(x[-c(1),],1,function(x) any(duplicated(unlist(x[which(x!="")]))==T))==T)) {
@@ -342,7 +368,7 @@ shinyServer(function(input, output, session) {
   #Identify Reference Sites
   ########################################################
   refID.data<-reactive({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     }
     inrefIDFile <- input$inrefIDFile
@@ -363,9 +389,9 @@ shinyServer(function(input, output, session) {
         colnames(x)<-c("Sites","Reference")
       }
       
-      if (any(bio.data()$Site.List%in%x[,1]==F)) {
+      if (any(bio.data.t$Site.List%in%x[,1]==F)) {
         validate(
-          need(if(any(bio.data()$Site.List%in%x[,1]==F)){FALSE}else{TRUE},"Site name mismatch between biological data and environmental data")
+          need(if(any(bio.data.t$Site.List%in%x[,1]==F)){FALSE}else{TRUE},"Site name mismatch between biological data and environmental data")
         )
         stop("Site name mismatch between biological data and environmental data")
       } else {
@@ -375,13 +401,13 @@ shinyServer(function(input, output, session) {
   })
   
   output$choose_columns <- renderUI({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     }
     
     if (!is.null(user.site.match())) {
       refID <- user.site.match()[,1]
-      colnames <- rownames(bio.data()$Summary.Metrics)
+      colnames <- rownames(bio.data.t$Summary.Metrics)
       
       b1<-ceiling(length(colnames)*1/4)
       b2<-ceiling(length(colnames)*2/4)
@@ -399,7 +425,7 @@ shinyServer(function(input, output, session) {
     } else {
       if(!is.null(refID.data())){
         refID <- refID.data()[which(refID.data()[,2]==0),1]
-        colnames <- rownames(bio.data()$Summary.Metrics)
+        colnames <- rownames(bio.data.t$Summary.Metrics)
         
         b1<-ceiling(length(colnames)*1/4)
         b2<-ceiling(length(colnames)*2/4)
@@ -419,7 +445,7 @@ shinyServer(function(input, output, session) {
                     checkboxGroupInput("c3", "",choices  = c3,selected = c3[!c3%in%refID]),
                     checkboxGroupInput("c4", "",choices  = c4,selected = c4[!c4%in%refID]))
       } else {
-        colnames <- rownames(bio.data()$Summary.Metrics)
+        colnames <- rownames(bio.data.t$Summary.Metrics)
         b1<-ceiling(length(colnames)*1/4)
         b2<-ceiling(length(colnames)*2/4)
         b3<-ceiling(length(colnames)*3/4)
@@ -438,19 +464,19 @@ shinyServer(function(input, output, session) {
   })
   
   sel.ref<-reactive ({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     }
     if (!is.null(input$c1)|!is.null(input$c2)|!is.null(input$c3)|!is.null(input$c4)){
       c(input$c1,input$c2,input$c3,input$c4)
     }
     #if (!is.null(user.site.match())){
-    #  rownames(bio.data()$Summary.Metrics)[!rownames(bio.data()$Summary.Metrics)%in%user.site.match()[,1]]
+    #  rownames(bio.data.t$Summary.Metrics)[!rownames(bio.data.t$Summary.Metrics)%in%user.site.match()[,1]]
     #}
   })
 
   output$usersitematchwasmodified<-reactive({
-    refsites<-rownames(bio.data()$Summary.Metrics)[!rownames(bio.data()$Summary.Metrics)%in%user.site.match()[,1]]
+    refsites<-rownames(bio.data.t$Summary.Metrics)[!rownames(bio.data.t$Summary.Metrics)%in%user.site.match()[,1]]
     if ((any(sel.ref()%in%refsites==F) | any(refsites%in%sel.ref()==F)) & !is.null(user.site.match())){
       return(0)
     } else {
@@ -460,24 +486,24 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'usersitematchwasmodified', suspendWhenHidden=FALSE)
 
   output$selrefID <- renderPrint({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     }
     sel.ref()
   })
   
   output$seltestID <- renderPrint({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     }
-    rownames(bio.data()$Summary.Metrics)[which(!rownames(bio.data()$Summary.Metrics)%in%sel.ref())]
+    rownames(bio.data.t$Summary.Metrics)[which(!rownames(bio.data.t$Summary.Metrics)%in%sel.ref())]
   })
   
   test.site.choices<-reactive({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     }
-    rownames(bio.data()$Summary.Metrics)[which(!rownames(bio.data()$Summary.Metrics)%in%sel.ref())]
+    rownames(bio.data.t$Summary.Metrics)[which(!rownames(bio.data.t$Summary.Metrics)%in%sel.ref())]
   })
   
   
@@ -490,7 +516,7 @@ shinyServer(function(input, output, session) {
   ########################################################
   
   output$sel.test.site<-renderUI({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       helpText("Input data required")
     }
     selectInput("test.site", label = h4("Select"), 
@@ -501,7 +527,7 @@ shinyServer(function(input, output, session) {
   
   test.site<-reactive({
     test.site<-input$test.site
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     } else{
       test.site
@@ -545,7 +571,7 @@ shinyServer(function(input, output, session) {
                                  Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
                                  k= if (k()!=0 & k()<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) k() else NULL,
                                  adaptive=adaptive(),
-                                 RDA.reference = if (nn.method()=="RDA-ANNA") {bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),sel.mets]} else {NULL} ),silent=T)
+                                 RDA.reference = if (nn.method()=="RDA-ANNA") {bio.data.t$Summary.Metrics[which(rownames(bio.data.t$Summary.Metrics)%in%sel.ref()),sel.mets]} else {NULL} ),silent=T)
         validate(
           need(!(is(nn.sites,"try-error")),paste0(attr(nn.sites,"condition")$message))
         )
@@ -559,7 +585,7 @@ shinyServer(function(input, output, session) {
         nn.sites<-try(site.match(Test=env.data()[which(env.data()[,"Sites"]%in%test.site()),-c(1)],
                              Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
                              k= if (k()!=0 & k()<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) k() else NULL,
-                             adaptive=adaptive(), RDA.reference = if (nn.method()=="RDA-ANNA") {bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),sel.mets]} else {NULL}),silent=T)
+                             adaptive=adaptive(), RDA.reference = if (nn.method()=="RDA-ANNA") {bio.data.t$Summary.Metrics[which(rownames(bio.data.t$Summary.Metrics)%in%sel.ref()),sel.mets]} else {NULL}),silent=T)
         validate(
           need(!(is(nn.sites,"try-error")),paste0(attr(nn.sites,"condition")$message))
         )
@@ -712,19 +738,27 @@ shinyServer(function(input, output, session) {
   #########################################################
   #Identify Indicator Metrics
   ########################################################
+
+  observe({
+    if (nn.method()!="RDA-ANNA" & is.null(bio.data.t)){
+      bio.data.t$Summary.Metrics<-cbind(bio.data.t$Summary.Metrics, 
+                                        add.met(Test=bio.data.t$Raw.Data[test.site(),],Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),])[,((ncol(bio.data.t$Summary.Metrics)+1):(ncol(bio.data.t$Summary.Metrics)+4))])
+    }
+  })
   
   output$choose_columns1<-renderUI({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     }
     if (input$metdata==F){
+      #colnames<-c(colnames(bio.data.t$Summary.Metrics),c("O:E","Bray-Curtis","CA1","CA2"))
       if (nn.method()=="RDA-ANNA"){
-        colnames<-colnames(bio.data()$Summary.Metrics)
+        colnames<-colnames(bio.data.t$Summary.Metrics)
       } else {
-        colnames<-isolate(colnames(add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])))
+        colnames<-c(colnames(bio.data.t$Summary.Metrics),c("O:E","Bray-Curtis","CA1","CA2"))
       }
     } else {
-      colnames<-colnames(bio.data()$Summary.Metrics)[-c(1)]
+      colnames<-colnames(bio.data.t$Summary.Metrics)[-1]
     }
     
     checkboxGroupInput("b1", "", choices  = colnames, selected=NULL)#colnames[colnames%in%sel.mets()])
@@ -734,12 +768,12 @@ shinyServer(function(input, output, session) {
     if (input$selectallmet>0){
       if (input$metdata==F){
         if (nn.method()=="RDA-ANNA"){
-          colnames<-colnames(bio.data()$Summary.Metrics)
+          colnames<-colnames(bio.data.t$Summary.Metrics)
         } else {
-          colnames<-isolate(colnames(add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])))
+          colnames<-c(colnames(bio.data.t$Summary.Metrics),c("O:E","Bray-Curtis","CA1","CA2"))
         }
       } else {
-        colnames<-colnames(bio.data()$Summary.Metrics)[-c(1)]
+        colnames<-colnames(bio.data.t$Summary.Metrics)
       }
       
       updateCheckboxGroupInput(session=session, inputId="b1", choices=colnames, selected=colnames)
@@ -750,12 +784,12 @@ shinyServer(function(input, output, session) {
     if (input$selectnonemet>0){
       if (input$metdata==F){
         if (nn.method()=="RDA-ANNA"){
-          colnames<-colnames(bio.data()$Summary.Metrics)
+          colnames<-colnames(bio.data.t$Summary.Metrics)
         } else {
-          colnames<-isolate(colnames(add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])))
+          colnames<-c(colnames(bio.data.t$Summary.Metrics),c("O:E","Bray-Curtis","CA1","CA2"))
         }
       } else {
-        colnames<-colnames(bio.data()$Summary.Metrics)[-c(1)]
+        colnames<-colnames(bio.data.t$Summary.Metrics)
       }
       
       updateCheckboxGroupInput(session=session, inputId="b1", choices=colnames, selected=NULL)
@@ -796,32 +830,50 @@ shinyServer(function(input, output, session) {
       )
       stop("Weighing by ecological distance requires ecological data")
     }
-    
-    if (input$metdata==F){
-      tsa.results<-try(tsa.test(Test=add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])[(1+length(nn.sites()$final.dist)),sel.mets()],
-                            Reference=add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])[1:length(nn.sites()$final.dist),sel.mets()],
-                            distance= if (distance()) nn.sites()$final.dist else NULL,
-                            outlier.rem= outlier.rem(),
-                            m.select= m.select(),
-                            na.cutoff=0.7,outbound=outbound()),silent=T)
-      validate(
-        need(!(is(tsa.results,"try-error")),paste0(attr(tsa.results,"condition")$message))
-      )
-      
-      tsa.results
-    } else {
-      taxa.data<-rbind(bio.data()$Summary.Metrics[names(nn.sites()$final.dist),],bio.data()$Summary.Metrics[test.site(),])
-      tsa.results<-try(tsa.test(Test=taxa.data[(1+length(nn.sites()$final.dist)),sel.mets()],
-                            Reference=taxa.data[1:length(nn.sites()$final.dist),sel.mets()],
-                            distance= if (distance()) nn.sites()$final.dist else NULL,
-                            outlier.rem= outlier.rem(),
-                            m.select= m.select(),
-                            na.cutoff=0.7,outbound=outbound()),silent=T)
-      validate(
-        need(!(is(tsa.results,"try-error")),paste0(attr(tsa.results,"condition")$message))
-      )
-      tsa.results
+    bio.data.t1<-NULL
+    bio.data.t1$Summary.Metrics<-bio.data.t$Summary.Metrics[c(names(nn.sites()$final.dist),test.site()),]
+    if(nn.method()!="RDA-ANNA"){
+      bio.data.t1$Summary.Metrics<-cbind(bio.data.t1$Summary.Metrics, add.met(Test=bio.data.t$Raw.Data[test.site(),],
+                                              Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),])[,(ncol(bio.data.t1$Summary.Metrics)+1):(ncol(bio.data.t1$Summary.Metrics)+4)])
     }
+    
+    tsa.results<-try(tsa.test(Test=bio.data.t1$Summary.Metrics[test.site(),sel.mets()],
+                              Reference=bio.data.t1$Summary.Metrics[names(nn.sites()$final.dist),sel.mets()],
+                              distance= if (distance()) nn.sites()$final.dist else NULL,
+                              outlier.rem= outlier.rem(),
+                              m.select= m.select(),
+                              na.cutoff=0.7,outbound=outbound()),silent=T)
+    validate(
+      need(!(is(tsa.results,"try-error")),paste0(attr(tsa.results,"condition")$message))
+    )
+    
+    tsa.results
+    
+    #if (input$metdata==F){
+    #  tsa.results<-try(tsa.test(Test=bio.data.t$Summary.Metrics[test.site(),sel.mets()],
+    #                        Reference=Reference=bio.data.t$Summary.Metrics[names(nn.sites()$final.dist),sel.mets()],
+    #                        distance= if (distance()) nn.sites()$final.dist else NULL,
+    #                        outlier.rem= outlier.rem(),
+    #                        m.select= m.select(),
+    #                        na.cutoff=0.7,outbound=outbound()),silent=T)
+    #  validate(
+    #    need(!(is(tsa.results,"try-error")),paste0(attr(tsa.results,"condition")$message))
+    #  )
+      
+    #  tsa.results
+    #} else {
+    #  taxa.data<-rbind(bio.data.t$Summary.Metrics[names(nn.sites()$final.dist),],bio.data.t$Summary.Metrics[test.site(),])
+    #  tsa.results<-try(tsa.test(Test=taxa.data[(1+length(nn.sites()$final.dist)),sel.mets()],
+    #                        Reference=taxa.data[1:length(nn.sites()$final.dist),sel.mets()],
+    #                        distance= if (distance()) nn.sites()$final.dist else NULL,
+    #                        outlier.rem= outlier.rem(),
+    #                        m.select= m.select(),
+    #                        na.cutoff=0.7,outbound=outbound()),silent=T)
+    #  validate(
+    #    need(!(is(tsa.results,"try-error")),paste0(attr(tsa.results,"condition")$message))
+    #  )
+    #  tsa.results
+    #}
   })
   
   output$display.ref.sites<-renderText({
@@ -866,12 +918,21 @@ shinyServer(function(input, output, session) {
     if (is.null(tsa.results())){
       return(NULL)
     }
-    if (input$metdata==F){
-      tsa.stand<-tsa.zscore(Test=add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])[(1+length(nn.sites()$final.dist)),],
-                            Reference=add.met(Test=bio.data()$Raw.Data[test.site(),],Reference=bio.data()$Raw.Data[names(nn.sites()$final.dist),])[1:length(nn.sites()$final.dist),])
-    } else {
-      tsa.stand<-tsa.zscore(Test=bio.data()$Summary.Metrics[test.site(),],Reference=bio.data()$Summary.Metrics[names(nn.sites()$final.dist),])
+    bio.data.t1<-NULL
+    bio.data.t1$Summary.Metrics<-bio.data.t$Summary.Metrics[c(names(nn.sites()$final.dist),test.site()),]
+    if(nn.method()!="RDA-ANNA"){
+      bio.data.t1$Summary.Metrics<-cbind(bio.data.t1$Summary.Metrics, add.met(Test=bio.data.t$Raw.Data[test.site(),],
+                                                                              Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),])[,(ncol(bio.data.t1$Summary.Metrics)+1):(ncol(bio.data.t1$Summary.Metrics)+4)])
     }
+    
+    tsa.stand<-tsa.zscore(Test=bio.data.t1$Summary.Metrics[test.site(),],Reference=bio.data.t1$Summary.Metrics[names(nn.sites()$final.dist),])
+    
+    #if (input$metdata==F){
+    #  tsa.stand<-tsa.zscore(Test=add.met(Test=bio.data.t$Raw.Data[test.site(),],Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),])[(1+length(nn.sites()$final.dist)),],
+    #                        Reference=add.met(Test=bio.data.t$Raw.Data[test.site(),],Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),])[1:length(nn.sites()$final.dist),])
+    #} else {
+    #  tsa.stand<-tsa.zscore(Test=bio.data.t$Summary.Metrics[test.site(),],Reference=bio.data.t$Summary.Metrics[names(nn.sites()$final.dist),])
+    #}
 
     nInd<-ncol(tsa.stand)
     nRef<-nrow(tsa.stand)-1
@@ -974,9 +1035,9 @@ shinyServer(function(input, output, session) {
     if (input$metdata){
       return(NULL)
     }
-    Reference<-bio.data()$Raw.Data[names(tsa.results()$mahalanobis.distance)[1:(length(tsa.results()$mahalanobis.distance)-1)],]
+    Reference<-bio.data.t$Raw.Data[names(tsa.results()$mahalanobis.distance)[1:(length(tsa.results()$mahalanobis.distance)-1)],]
     nRef<-nrow(Reference)
-    Test<-bio.data()$Raw.Data[names(tsa.results()$mahalanobis.distance)[(length(tsa.results()$mahalanobis.distance))],]
+    Test<-bio.data.t$Raw.Data[names(tsa.results()$mahalanobis.distance)[(length(tsa.results()$mahalanobis.distance))],]
     raw.data<-rbind(Reference,Test)
     pRef<-colSums(decostand(Reference,"pa"))/nrow(Reference)
     
@@ -1109,24 +1170,24 @@ shinyServer(function(input, output, session) {
   
   
   output$ab.choose_columns1<-renderUI({
-    if (is.null(bio.data())){
+    if (is.null(bio.data.t)){
       return(NULL)
     }
     if (!is.null(input$nnmethod)){
       if (input$metdata==T){
-        colnames<-colnames(bio.data()$Summary.Metrics)[-c(1)]
+        colnames<-colnames(bio.data.t$Summary.Metrics)[-c(1)]
       } else {
         if (!is.null(env.data())){
           if (input$nnmethod=="ANNA"){
-            colnames<-colnames(add.met(Test=bio.data()$Raw.Data[1,],Reference=bio.data()$Raw.Data[2:11,]))
+        colnames<-c(colnames(bio.data.t$Summary.Metrics),c("O:E","Bray-Curtis","CA1","CA2"))
           }
           if (input$nnmethod=="RDA-ANNA"){
-            colnames<-colnames(bio.data()$Summary.Metrics)
+        colnames<-colnames(bio.data.t$Summary.Metrics)
           }
         }
         if (!is.null(user.site.match())){
           if (input$nnmethod=="User Selected"){
-            colnames<-colnames(add.met(Test=bio.data()$Raw.Data[1,],Reference=bio.data()$Raw.Data[2:11,]))
+            colnames<-c(colnames(bio.data.t$Summary.Metrics),c("O:E","Bray-Curtis","CA1","CA2"))
           }
         }
       }
@@ -1139,19 +1200,19 @@ shinyServer(function(input, output, session) {
   observe({
     if (input$ab.selectallmet>0){
       if (input$metdata==T){
-        colnames<-colnames(bio.data()$Summary.Metrics)[-c(1)]
+        colnames<-colnames(bio.data.t$Summary.Metrics)[-c(1)]
       } else {
         if (!is.null(env.data())){
           if (input$nnmethod=="ANNA"){
-            colnames<-colnames(add.met(Test=bio.data()$Raw.Data[1,],Reference=bio.data()$Raw.Data[2:11,]))
+            colnames<-c(colnames(bio.data.t$Summary.Metrics),c("O:E","Bray-Curtis","CA1","CA2"))
           }
           if (input$nnmethod=="RDA-ANNA"){
-            colnames<-colnames(bio.data()$Summary.Metrics)
+            colnames<-colnames(bio.data.t$Summary.Metrics)
           }
         }
         if (!is.null(user.site.match())){
           if (input$nnmethod=="User Selected"){
-            colnames<-colnames(add.met(Test=bio.data()$Raw.Data[1,],Reference=bio.data()$Raw.Data[2:11,]))
+            colnames<-c(colnames(bio.data.t$Summary.Metrics),c("O:E","Bray-Curtis","CA1","CA2"))
           }
         }
       }
@@ -1162,19 +1223,19 @@ shinyServer(function(input, output, session) {
   observe({
     if (input$ab.selectnonemet>0){
       if (input$metdata==T){
-        colnames<-colnames(bio.data()$Summary.Metrics)[-c(1)]
+        colnames<-colnames(bio.data.t$Summary.Metrics)[-c(1)]
       } else {
         if (!is.null(env.data())){
           if (input$nnmethod=="ANNA"){
-            colnames<-colnames(add.met(Test=bio.data()$Raw.Data[1,],Reference=bio.data()$Raw.Data[2:11,]))
+            colnames<-c(colnames(bio.data.t$Summary.Metrics),c("O:E","Bray-Curtis","CA1","CA2"))
           }
           if (input$nnmethod=="RDA-ANNA"){
-            colnames<-colnames(bio.data()$Summary.Metrics)
+            colnames<-colnames(bio.data.t$Summary.Metrics)
           }
         }
         if (!is.null(user.site.match())){
           if (input$nnmethod=="User Selected"){
-            colnames<-colnames(add.met(Test=bio.data()$Raw.Data[1,],Reference=bio.data()$Raw.Data[2:11,]))
+            colnames<-c(colnames(bio.data.t$Summary.Metrics),c("O:E","Bray-Curtis","CA1","CA2"))
           }
         }
       }
@@ -1239,7 +1300,7 @@ shinyServer(function(input, output, session) {
           new.dir.names<-c("NN Ordination", "NN Distance", "TSA Distance", "TSA Boxplot", "TSA Ordination", "CA Ordination", "Multiplot")
           
           ab.sel.mets<-isolate(ab.sel.mets())
-          nnmethod<-isolate(input$nn.method)
+          nnmethod<-isolate(input$nnmethod)
           ab.adaptive<-isolate(ab.adaptive())
           ab.k<-isolate(ab.k())
           ab.outlier.rem<-isolate(input$ab.outlier.rem)
@@ -1256,12 +1317,13 @@ shinyServer(function(input, output, session) {
             n<-which(test.site.choices()%in%i)
             incProgress(1/length(test.site.choices()), detail = paste("In progress: ", i))
             
+
             if (nnmethod=="RDA-ANNA"){
               nn.sites<-try(site.match(Test=env.data()[which(env.data()[,"Sites"]%in%i),-c(1)],
                                    Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
                                    k= if (ab.k!=0 & ab.k<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) ab.k else NULL,
                                    adaptive=ab.adaptive,
-                                   RDA.reference=bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),ab.sel.mets]),
+                                   RDA.reference=isolate(bio.data.t$Summary.Metrics[which(rownames(bio.data.t$Summary.Metrics)%in%sel.ref()),ab.sel.mets])),
                             silent=T)
               if(is(nn.sites,"try-error")){
                 results[i,1]<-nn.sites[1]
@@ -1272,6 +1334,7 @@ shinyServer(function(input, output, session) {
               }
             }
             if (nnmethod=="ANNA"){
+              
               nn.sites<-try(site.match(Test=env.data()[which(env.data()[,"Sites"]%in%i),-c(1)],
                                    Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
                                    k= if (ab.k!=0 & ab.k<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) ab.k else NULL,
@@ -1292,7 +1355,7 @@ shinyServer(function(input, output, session) {
                                      Reference=env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)],
                                      k= if (ab.k!=0 & ab.k<nrow(env.data()[which(env.data()[,"Sites"]%in%sel.ref()),-c(1)])) ab.k else NULL,
                                      adaptive=ab.adaptive,
-                                     RDA.reference = if (isolate(input$nnmethod.user=="RDA-ANNA")) {bio.data()$Summary.Metrics[which(bio.data()$Summary.Metrics1[,"Sites"]%in%sel.ref()),ab.sel.mets]} else {NULL}),
+                                     RDA.reference = if (isolate(input$nnmethod.user=="RDA-ANNA")) {bio.data.t$Summary.Metrics[which(rownames(bio.data.t$Summary.Metrics)%in%sel.ref()),ab.sel.mets]} else {NULL}),
                               silent=T)
                 if(is(nn.sites,"try-error")){
                   results[i,1]<-nn.sites[1]
@@ -1314,28 +1377,51 @@ shinyServer(function(input, output, session) {
               }
             }
             
+            bio.data.t1<-NULL
+            bio.data.t1$Summary.Metrics<-bio.data.t$Summary.Metrics[c(names(nn.sites$final.dist),i),]
+            if(nnmethod!="RDA-ANNA"){
+              a.met<-add.met(Test=bio.data.t$Raw.Data[i,],Reference=bio.data.t$Raw.Data[names(nn.sites$final.dist),])
+              bio.data.t1$Summary.Metrics<-cbind(bio.data.t1$Summary.Metrics, a.met[,(ncol(a.met)-3):ncol(a.met)])
+            }
+
             if (input$metdata==F){
-              tsa.results<-try(tsa.test(Test=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[names(nn.sites$final.dist),])[(1+length(nn.sites$final.dist)),ab.sel.mets],
-                                    Reference=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[names(nn.sites$final.dist),])[1:length(nn.sites$final.dist),ab.sel.mets],
+              tsa.results<-try(tsa.test(bio.data.t1$Summary.Metrics[i,ab.sel.mets],
+                                    Reference=bio.data.t1$Summary.Metrics[names(nn.sites$final.dist),ab.sel.mets],
                                     distance= if (ab.distance) nn.sites$final.dist else NULL,
                                     outlier.rem= ab.outlier.rem,
                                     m.select= ab.m.select,
                                     na.cutoff=0.7),
                                silent=T)
+              
+              #tsa.results<-try(tsa.test(Test=add.met(Test=bio.data.t$Raw.Data[i,],Reference=bio.data.t$Raw.Data[names(nn.sites$final.dist),])[(1+length(nn.sites$final.dist)),ab.sel.mets],
+              #                      Reference=add.met(Test=bio.data.t$Raw.Data[i,],Reference=bio.data.t$Raw.Data[names(nn.sites$final.dist),])[1:length(nn.sites$final.dist),ab.sel.mets],
+              #                      distance= if (ab.distance) nn.sites$final.dist else NULL,
+              #                      outlier.rem= ab.outlier.rem,
+              #                      m.select= ab.m.select,
+              #                      na.cutoff=0.7),
+              #                 silent=T)
               if(is(tsa.results,"try-error")){
                 results[i,1]<-tsa.results[1]
                 next
               } else {
               }
             } else {
-              taxa.data<-rbind(bio.data()$Summary.Metrics.Data[names(nn.sites$final.dist),],bio.data()$Summary.Metrics[i,])
-              tsa.results<-try(tsa.test(Test=taxa.data[(1+length(nn.sites$final.dist)),ab.sel.mets],
-                                    Reference=taxa.data[1:length(nn.sites$final.dist),ab.sel.mets],
-                                    distance= if (ab.distance) nn.sites$final.dist else NULL,
-                                    outlier.rem= ab.outlier.rem,
-                                    m.select= ab.m.select,
-                                    na.cutoff=0.7),
+              tsa.results<-try(tsa.test(bio.data.t1$Summary.Metrics[i,ab.sel.mets],
+                                        Reference=bio.data.t1$Summary.Metrics[names(nn.sites$final.dist),ab.sel.mets],
+                                        distance= if (ab.distance) nn.sites$final.dist else NULL,
+                                        outlier.rem= ab.outlier.rem,
+                                        m.select= ab.m.select,
+                                        na.cutoff=0.7),
                                silent=T)
+              
+              #taxa.data<-rbind(bio.data.t1$Summary.Metrics.Data[names(nn.sites$final.dist),],bio.data.t1$Summary.Metrics[i,])
+              #tsa.results<-try(tsa.test(Test=taxa.data[(1+length(nn.sites$final.dist)),ab.sel.mets],
+              #                      Reference=taxa.data[1:length(nn.sites$final.dist),ab.sel.mets],
+              #                      distance= if (ab.distance) nn.sites$final.dist else NULL,
+              #                      outlier.rem= ab.outlier.rem,
+              #                      m.select= ab.m.select,
+              #                      na.cutoff=0.7),
+              #                 silent=T)
               if(is(tsa.results,"try-error")){
                 results[i,1]<-tsa.results[1]
                 next
@@ -1374,8 +1460,8 @@ shinyServer(function(input, output, session) {
                   dev.off()
                 } 
                 if (input$metdata==F){
-                  tsa.stand<-tsa.zscore(Test=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[(1+length(nn.sites$final.dist)),],
-                                        Reference=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[1:length(nn.sites$final.dist),])
+                  tsa.stand<-tsa.zscore(Test=bio.data.t1$Summary.Metrics[i,],
+                                        Reference=bio.data.t1$Summary.Metrics[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])
                   nInd<-ncol(tsa.stand)
                   nRef<-nrow(tsa.stand)-1
                   part.tsa<-if (!is.null(tsa.results$partial.tsa)) {tsa.results$partial.tsa} else {NULL}
@@ -1420,9 +1506,9 @@ shinyServer(function(input, output, session) {
               }
               if (isolate(input$ab.cascatter.plot)){
                 jpeg(filename=paste0(sel.dir(),"/CA Ordination/",i,"-caord.jpeg"),width=640,height=480)
-                Reference<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
+                Reference<-bio.data.t$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
                 nRef<-nrow(Reference)
-                Test<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
+                Test<-bio.data.t$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
                 raw.data<-rbind(Reference,Test)
                 pRef<-colSums(decostand(Reference,"pa"))/nrow(Reference)
                 
@@ -1457,8 +1543,8 @@ shinyServer(function(input, output, session) {
                 if (input$metdata==T){
                   boxplot(tsa.results)
                 } else {
-                  tsa.stand<-tsa.zscore(Test=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[(1+length(nn.sites$final.dist)),],
-                                        Reference=add.met(Test=bio.data()$Raw.Data[i,],Reference=bio.data()$Raw.Data[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])[1:length(nn.sites$final.dist),])
+                  tsa.stand<-tsa.zscore(Test=bio.data.t1$Summary.Metrics[i,],
+                                        Reference=bio.data.t1$Summary.Metrics[rownames(tsa.results$raw.data[-c(nrow(tsa.results$raw.data)),]),])
                   nInd<-ncol(tsa.stand)
                   nRef<-nrow(tsa.stand)-1
                   part.tsa<-if (!is.null(tsa.results$partial.tsa)) {tsa.results$partial.tsa} else {NULL}
@@ -1506,9 +1592,9 @@ shinyServer(function(input, output, session) {
                   pcoa.tsa(tsa.results)
                 }
                 if (isolate(input$multiplot1.sel=="CA Ordination")){
-                  Reference<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
+                  Reference<-bio.data.t$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
                   nRef<-nrow(Reference)
-                  Test<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
+                  Test<-bio.data.t$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
                   raw.data<-rbind(Reference,Test)
                   pRef<-colSums(decostand(Reference,"pa"))/nrow(Reference)
                   
@@ -1542,9 +1628,9 @@ shinyServer(function(input, output, session) {
                   pcoa.tsa(tsa.results)
                 }
                 if (isolate(input$multiplot2.sel=="CA Ordination")){
-                  Reference<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
+                  Reference<-bio.data.t$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
                   nRef<-nrow(Reference)
-                  Test<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
+                  Test<-bio.data.t$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
                   raw.data<-rbind(Reference,Test)
                   pRef<-colSums(decostand(Reference,"pa"))/nrow(Reference)
                   
@@ -1578,9 +1664,9 @@ shinyServer(function(input, output, session) {
                   pcoa.tsa(tsa.results)
                 }
                 if (isolate(input$multiplot3.sel=="CA Ordination")){
-                  Reference<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
+                  Reference<-bio.data.t$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
                   nRef<-nrow(Reference)
-                  Test<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
+                  Test<-bio.data.t$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
                   raw.data<-rbind(Reference,Test)
                   pRef<-colSums(decostand(Reference,"pa"))/nrow(Reference)
                   
@@ -1614,9 +1700,9 @@ shinyServer(function(input, output, session) {
                   pcoa.tsa(tsa.results)
                 }
                 if (isolate(input$multiplot4.sel=="CA Ordination")){
-                  Reference<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
+                  Reference<-bio.data.t$Raw.Data[names(tsa.results$mahalanobis.distance)[1:(length(tsa.results$mahalanobis.distance)-1)],]
                   nRef<-nrow(Reference)
-                  Test<-bio.data()$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
+                  Test<-bio.data.t$Raw.Data[names(tsa.results$mahalanobis.distance)[(length(tsa.results$mahalanobis.distance))],]
                   raw.data<-rbind(Reference,Test)
                   pRef<-colSums(decostand(Reference,"pa"))/nrow(Reference)
                   
@@ -1655,7 +1741,9 @@ shinyServer(function(input, output, session) {
   
   
   output$ab.results<-renderDataTable({
-    results()[,1:15]
+    temp<-cbind(rownames(results()),results()[,1:15])
+    colnames(temp)[1]<-"Site"
+    temp
   })
   
   output$abdone<-reactive({
