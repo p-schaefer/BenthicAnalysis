@@ -45,7 +45,7 @@ shinyServer(function(input, output, session) {
           d$Raw.Data1<-NULL
           d$Summary.Metrics1<-cbind(d$Site.List,d$Summary.Metrics)
           colnames(d$Summary.Metrics1)[1]<-"Sites"
-          d$untransformed.metrics<-d$Summary.Metrics1
+          d$untransformed.metrics<-d$Summary.Metrics
           d$transformations<-matrix(ncol=2,nrow=ncol(d$Summary.Metrics))
           d$transformations[1:ncol(d$Summary.Metrics),2]<-rep("None",ncol(d$Summary.Metrics))
           d$transformations[1:ncol(d$Summary.Metrics),1]<-colnames(d$Summary.Metrics)
@@ -65,7 +65,7 @@ shinyServer(function(input, output, session) {
           d$Raw.Data1<-NULL
           d$Summary.Metrics1<-d$Summary.Metrics
           colnames(d$Summary.Metrics1)[1]<-"Sites"
-          d$untransformed.metrics<-d$Summary.Metrics1
+          d$untransformed.metrics<-d$Summary.Metrics
           d$transformations<-matrix(ncol=2,nrow=ncol(d$Summary.Metrics))
           d$transformations[1:ncol(d$Summary.Metrics),2]<-rep("None",ncol(d$Summary.Metrics))
           d$transformations[1:ncol(d$Summary.Metrics),1]<-colnames(d$Summary.Metrics)
@@ -103,6 +103,22 @@ shinyServer(function(input, output, session) {
   output$metric.summary.view <- renderPrint({
     summary(bio.data()$Summary.Metrics)
   })
+  
+  observeEvent(input$downloadmetricData,{
+    if (!is.null(bio.data.t)){
+      dir<-choose.dir()
+      write.csv(bio.data.t$untransformed.metrics,file=paste0(dir,"/Metrics.csv"))
+    }
+    
+  })
+  
+  observeEvent(input$downloadtransmetricData,{
+    if (!is.null(bio.data.t)){
+      dir<-choose.dir()
+      write.csv(bio.data.t$Summary.Metrics,file=paste0(dir,"/Transformed Metrics.csv"))
+    }
+  })
+  
   
   output$downloadbioData <- downloadHandler(
     filename = function() { paste(input$inbioFile,'.csv', sep='') },

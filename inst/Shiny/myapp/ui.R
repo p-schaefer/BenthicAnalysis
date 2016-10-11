@@ -62,8 +62,9 @@ shinyUI(
                                                         value = 2),
                                            br(),
                                            "-------------------------------------",
-                                           br()
-                                           #conditionalPanel("input.metdata==false",downloadButton('downloadmetricData', 'Export  Metrc Data'))
+                                           br(),
+                                           conditionalPanel("input.metdata==false",actionButton('downloadmetricData', 'Export Metrc Data')),
+                                           actionButton('downloadtransmetricData', 'Export Transformed Metrc Data')
                                          ),
                                          mainPanel(
                                            tabsetPanel(type="tabs",
