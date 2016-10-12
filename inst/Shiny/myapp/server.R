@@ -93,6 +93,9 @@ shinyServer(function(input, output, session) {
   
 
   output$bio.data.view <- renderDataTable({
+    validate(
+      need(!is.null(bio.data()),"")
+    )
     bio.data()$Raw.Data1
   })
   

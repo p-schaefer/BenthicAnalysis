@@ -85,7 +85,7 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
 
   summ$'Percent.EPT'<-adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])/abund
   summ$'Percent.mEPT'<-(adapt.sum(taxa[,grep(paste0("Ephemeroptera|Plecoptera|Trichoptera"),colnames(taxa))])-adapt.sum(taxa[,grep(paste0("Baetidae|Hydropsychidae"),colnames(taxa))]))/abund
-  summ$'Percent.ICHAEBO'<-(summ$'Percent Oligochaeta'+summ$'Percent Chironomidae'+summ$'Percent Isopoda'+summ$'Percent Amphipoda')+(adapt.sum(taxa[,grep(paste0("Baetidae|Hydropsychidae"),colnames(taxa))])/abund)
+  summ$'Percent.ICHAEBO'<-(summ$'Percent.Oligochaeta'+summ$'Percent.Chironomidae'+summ$'Percent.Isopoda'+summ$'Percent.Amphipoda')+(adapt.sum(taxa[,grep(paste0("Baetidae|Hydropsychidae"),colnames(taxa))])/abund)
   summ$'EPT.Richness'<-richness.calc(taxa[,grep("Ephemeroptera|Plecoptera|Trichoptera",colnames(taxa))])
   summ$'Ephem.Richness'<-richness.calc(taxa[,grep("Ephemeroptera",colnames(taxa))])
   summ$'Percent.Ephem'<-adapt.sum(taxa[,grep("Ephemeroptera",colnames(taxa))])/abund
@@ -132,15 +132,15 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
   summ$'Percent.Filter'<-number.ftrait(taxa,"COLLECTOR-FILTERER")/abund
   summ$'Percent.Gatherer'<-number.ftrait(taxa,"COLLECTOR-GATHERER")/abund
   #summ[,33]<-(number.ftrait(taxa,"SCRAPER")+number.ftrait(taxa,"SCRAPER/GRAZER"))/(number.ftrait(taxa,"SHREDDER")+number.ftrait(taxa,"COLLECTOR"))
-  summ$'Scraper.to.Shredder.Collector'<-log(summ$'Percent Scraper'/(summ$'Percent Shredder'+summ$'Percent Gatherer'))
+  summ$'Scraper.to.Shredder.Collector'<-log(summ$'Percent.Scraper'/(summ$'Percent.Shredder'+summ$'Percent.Gatherer'))
   
   
   summ$'Percent.Clinger'<-(number.htrait(taxa,"CLINGER"))/abund
   summ$'Percent.Burrower'<-(number.htrait(taxa,"BURROWER"))/abund
   summ$'Percent.Sprawler'<-(number.htrait(taxa,"SPRAWLER"))/abund
-  summ$'Burrower.to.Sprawler.Clinger'<-log(summ$'Percent Burrower'/(summ$'Percent Clinger'+summ$'Percent Sprawler'))
+  summ$'Burrower.to.Sprawler.Clinger'<-log(summ$'Percent.Burrower'/(summ$'Percent.Clinger'+summ$'Percent.Sprawler'))
   
-  summ<-data.frame(summ)
+  summ<-as.data.frame(summ)
   rownames(summ)<-rownames(taxa)
 
   summ[is.nan.data.frame(summ)]<-NA
