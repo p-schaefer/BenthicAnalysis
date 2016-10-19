@@ -167,24 +167,31 @@ shinyServer(function(input, output, session) {
     )
 
     if (input$trans=="None"){
-      t.metric<-bio.data()$untransformed.metrics[,met.for.trans()]
+      t.metric<-try(bio.data()$untransformed.metrics[,met.for.trans()],silent = T)
     }
     if (input$trans=="Log10"){
-      t.metric<-log(bio.data()$untransformed.metrics[,met.for.trans()])
+      t.metric<-try(log(bio.data()$untransformed.metrics[,met.for.trans()]),silent = T)
     }
     if (input$trans=="Log10+1" ){
-      t.metric<-log(bio.data()$untransformed.metrics[,met.for.trans()]+1)
+      t.metric<-try(log(bio.data()$untransformed.metrics[,met.for.trans()]+1),silent = T)
     }
     if (input$trans=="Square Root" ){
-      t.metric<-sqrt(bio.data()$untransformed.metrics[,met.for.trans()])
+      t.metric<-try(sqrt(bio.data()$untransformed.metrics[,met.for.trans()]),silent = T)
     }
     if (input$trans=="Inverse" ){
-      t.metric<-1/(bio.data()$untransformed.metrics[,met.for.trans()])
+      t.metric<-try(1/(bio.data()$untransformed.metrics[,met.for.trans()]),silent = T)
     }
     if (input$trans=="Arcsine Sqare Root"){
-      t.metric<-asin(sqrt(bio.data()$untransformed.metrics[,met.for.trans()]))
+      t.metric<-try(asin(sqrt(bio.data()$untransformed.metrics[,met.for.trans()])),silent = T)
     }
-    t.metric
+    validate(
+      need(!(is(t.metric,"try-error")),"")
+    )
+    if (!is(t.metric,"try-error")) {
+      t.metric
+    } else {
+      NULL
+    }
   })
   
   output$met.trans.plot1<-renderPlot({
@@ -229,6 +236,9 @@ shinyServer(function(input, output, session) {
   })
 
   observeEvent(input$apply.trans,{
+    #validate(
+    #  need(!has_warning(trans.metric()),"")
+    #)
     if(is.null(bio.data.t$modified)){
       bio.data.t$Summary.Metrics<-bio.data()$Summary.Metrics
       bio.data.t$transformations<-bio.data()$transformations
