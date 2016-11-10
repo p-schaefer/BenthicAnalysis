@@ -771,7 +771,7 @@ shinyServer(function(input, output, session) {
   observe({
     if (nn.method()!="RDA-ANNA" & is.null(bio.data.t)){
       bio.data.t$Summary.Metrics<-cbind(bio.data.t$Summary.Metrics, 
-                                        add.met(Test=bio.data.t$Raw.Data[test.site(),],Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),])[,((ncol(bio.data.t$Summary.Metrics)+1):(ncol(bio.data.t$Summary.Metrics)+4))])
+                                        add.met(Test=bio.data.t$Raw.Data[test.site(),],Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),]),original=F)
     }
   })
   
@@ -840,7 +840,6 @@ shinyServer(function(input, output, session) {
   m.select<-reactive({input$mselect})
   outbound<-reactive({as.numeric(input$outbound.input)})
   
-  
   tsa.results<-reactive({
     if (is.null(nn.sites())){
       return(NULL)
@@ -863,7 +862,7 @@ shinyServer(function(input, output, session) {
     bio.data.t1$Summary.Metrics<-bio.data.t$Summary.Metrics[c(names(nn.sites()$final.dist),test.site()),]
     if(nn.method()!="RDA-ANNA"){
       bio.data.t1$Summary.Metrics<-cbind(bio.data.t1$Summary.Metrics, add.met(Test=bio.data.t$Raw.Data[test.site(),],
-                                              Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),])[,(ncol(bio.data.t1$Summary.Metrics)+1):(ncol(bio.data.t1$Summary.Metrics)+4)])
+                                              Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),]),original=F)
     }
     
     tsa.results<-try(tsa.test(Test=bio.data.t1$Summary.Metrics[test.site(),sel.mets()],
@@ -951,7 +950,7 @@ shinyServer(function(input, output, session) {
     bio.data.t1$Summary.Metrics<-bio.data.t$Summary.Metrics[c(names(nn.sites()$final.dist),test.site()),]
     if(nn.method()!="RDA-ANNA"){
       bio.data.t1$Summary.Metrics<-cbind(bio.data.t1$Summary.Metrics, add.met(Test=bio.data.t$Raw.Data[test.site(),],
-                                                                              Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),])[,(ncol(bio.data.t1$Summary.Metrics)+1):(ncol(bio.data.t1$Summary.Metrics)+4)])
+                                                                              Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),]),original=F)
     }
     
     tsa.stand<-tsa.zscore(Test=bio.data.t1$Summary.Metrics[test.site(),],Reference=bio.data.t1$Summary.Metrics[names(nn.sites()$final.dist),])
@@ -1409,8 +1408,8 @@ shinyServer(function(input, output, session) {
             bio.data.t1<-NULL
             bio.data.t1$Summary.Metrics<-bio.data.t$Summary.Metrics[c(names(nn.sites$final.dist),i),]
             if(nnmethod!="RDA-ANNA"){
-              a.met<-add.met(Test=bio.data.t$Raw.Data[i,],Reference=bio.data.t$Raw.Data[names(nn.sites$final.dist),])
-              bio.data.t1$Summary.Metrics<-cbind(bio.data.t1$Summary.Metrics, a.met[,(ncol(a.met)-3):ncol(a.met)])
+              a.met<-add.met(Test=bio.data.t$Raw.Data[i,],Reference=bio.data.t$Raw.Data[names(nn.sites$final.dist),],original=F)
+              bio.data.t1$Summary.Metrics<-cbind(bio.data.t1$Summary.Metrics, a.met)
             }
 
             if (input$metdata==F){

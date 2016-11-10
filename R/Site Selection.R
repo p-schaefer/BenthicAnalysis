@@ -66,8 +66,9 @@ site.match<-function(Test, Reference, k=NULL, adaptive=T, RDA.reference=NULL) {
     anna.test<-(anna.test.x - apply(anna.ref$x,2,min)) / (apply(anna.ref$x,2,max) - apply(anna.ref$x,2,min))
     anna.ref.x<-decostand(anna.ref$x,method="range")
     sig<-min(sig, ncol(anna.ref.x))
-    anna.dist<- sort(as.matrix(dist(rbind(sweep(sweep(anna.ref.x,2,anna.test,"-"),2, eigenvals(anna.ref)/sum(eigenvals(anna.ref)),"*")[,1:sig],rep(0,sig))))[,nrow(Reference)+1])
-    anna.dist<-anna.dist[-c(1)]
+    temp<-rbind(sweep(sweep(anna.ref.x,2,anna.test,"-"),2, eigenvals(anna.ref)/sum(eigenvals(anna.ref)),"*")[,1:sig],rep(0,sig))
+    anna.dist<- sort(as.matrix(dist(temp))[,nrow(Reference)+1])
+    anna.dist<-anna.dist[-c(which(names(anna.dist)==""))]
   }
 
   if (!is.null(RDA.reference)){
@@ -107,8 +108,9 @@ site.match<-function(Test, Reference, k=NULL, adaptive=T, RDA.reference=NULL) {
     anna.test<-(anna.test.x - apply(anna.ref$CCA$wa,2,min)) / (apply(anna.ref$CCA$wa,2,max) - apply(anna.ref$CCA$wa,2,min))
     anna.ref.x<-decostand(anna.ref$CCA$wa,method="range")
     sig<-min(sig, ncol(anna.ref.x))
-    anna.dist<-sort(as.matrix(dist(rbind(sweep(sweep(anna.ref.x,2,anna.test,"-"),2, anna.ref$CCA$eig/sum(anna.ref$CCA$eig),"*")[,1:sig],rep(0,sig))))[,nrow(Reference)+1])
-    anna.dist<-anna.dist[-c(1)]
+    temp<-rbind(sweep(sweep(anna.ref.x,2,anna.test,"-"),2, anna.ref$CCA$eig/sum(anna.ref$CCA$eig),"*")[,1:sig],rep(0,sig))
+    anna.dist<-sort(as.matrix(dist(temp))[,nrow(Reference)+1])
+    anna.dist<-anna.dist[-c(which(names(anna.dist)==""))]
   }
 
   final.dist<-NULL

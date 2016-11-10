@@ -196,7 +196,7 @@ summary.benth.metric<-function(benth.metric) {
 #' additional.metrics<-add.met(Test=bio.data.test$Raw.Data[rownames(bio.data.test$Raw.Data[201,]),],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),])
 #' additional.metrics
 
-add.met<-function (Test,Reference) {
+add.met<-function (Test,Reference,original=F,tax.fields=2) {
   if (any(colnames(Test)%in%colnames(Reference)==F)){
     stop("Column name mismatch between Test and Reference Set")
   }
@@ -231,8 +231,14 @@ add.met<-function (Test,Reference) {
   ca1<-ca.ord$CA$u[,1]
   ca2<-ca.ord$CA$u[,2]
   
-  raw.data<-cbind(benth.met(x=raw.data,tax.fields=2,site.fields=1)$Summary.Metrics,c(e.var,o),c(ref.bray,test.bray),ca1,ca2)
-  colnames(raw.data)[(ncol(raw.data)-3):ncol(raw.data)]<-c("O:E","Bray-Curtis","CA1","CA2")
+  if (original==T){
+    raw.data<-data.frame(cbind(benth.met(x=raw.data,tax.fields=2,site.fields=1)$Summary.Metrics,c(e.var,o),c(ref.bray,test.bray),ca1,ca2))
+    colnames(raw.data)[(ncol(raw.data)-3):ncol(raw.data)]<-c("O:E","Bray-Curtis","CA1","CA2")
+  }
+  if (original==F){
+    raw.data<-data.frame(cbind(c(e.var,o),c(ref.bray,test.bray),ca1,ca2))
+    colnames(raw.data)<-c("O:E","Bray-Curtis","CA1","CA2")
+  }
 
   return(raw.data)
 }
