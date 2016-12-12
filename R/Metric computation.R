@@ -25,6 +25,11 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
   } else {
     HBI<-data.frame(HBI)
   }
+  
+  if (!any(colnames(x) %in% c("V1","X1"))) {
+    x[,1:site.fields]<-apply(x[,1:site.fields],2,as.character)
+    x<-rbind(colnames(x),x)
+  }
 
   if (site.fields>1){
     site.names<-apply(as.matrix(x[(tax.fields+1):nrow(x),1:site.fields]),1,FUN=paste0,collapse="",sep="-")# get site names
@@ -32,10 +37,10 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
   } else if (site.fields==1){
     site.names<-x[(tax.fields+1):nrow(x),1]
   }
-
+  
   taxa.names<-apply(as.matrix(x[1:tax.fields,(site.fields+1):ncol(x)]),2,FUN=paste0,collapse="",sep=";")# get taxa names
   taxa.names<-substr(taxa.names,start=1,stop=nchar(taxa.names)-1)
-
+  
   taxa<-data.frame(x[(tax.fields+1):nrow(x),(site.fields+1):ncol(x)])
   if (nrow(x)-site.fields==1){
     taxa<-t(x.frame(apply(taxa,2,as.numeric)))
