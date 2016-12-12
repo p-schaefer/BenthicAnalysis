@@ -367,17 +367,19 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }
     x<-data.frame(read.csv(inuser.site.matchFile$datapath, header=T,strip.white=TRUE))
+    
     if (any(as.vector(x[,1])%in%bio.data.t$Site.List==F)) {
       stop("Site mismatch between biological data and user site matched data")
     } 
-    if (any(apply(x[-c(1),],1,function(x) any(duplicated(unlist(x[which(x!="")]))==T))==T)) {
+    if (any(apply(x,1,function(x) any(duplicated(x[-c(1, which(x==""))]))))) {
       stop("Duplicate Reference sample names detected for one or more test samples")
     } 
-    if (any(apply(x,1,function(x) any(duplicated(unlist(x[which(x!="")]))==T))==T)|any(x[,1]%in%unlist(x[,-c(1)])==T)) {
+    if (any(apply(x,1,function(x) any(duplicated(x[x!=""]))))) {
       stop("A sample cannot be classified as both test and reference")
-    } else {
-      x
-    }
+    } 
+    
+    x
+    
   })
   
   output$usersitematch.table<-renderTable({
