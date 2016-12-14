@@ -17,7 +17,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     } else {
       if (input$metdata==F) {
-        d<-benth.met(x=read.csv(inbioFile$datapath, header=F,strip.white=TRUE), tax.fields=2, site.fields=input$site.names, HBI = NULL)
+        d<-benth.met(x=read.csv(inbioFile$datapath, header=F,strip.white=TRUE), tax.fields=input$taxa.names, site.fields=input$site.names, HBI = NULL)
         d$Raw.Data1<-cbind(d$Site.List,d$Raw.Data)
         colnames(d$Raw.Data1)[1]<-"Sites"
         d$Summary.Metrics1<-cbind(d$Site.List,d$Summary.Metrics)
@@ -184,6 +184,10 @@ shinyServer(function(input, output, session) {
     if (input$trans=="Arcsine Sqare Root"){
       t.metric<-try(asin(sqrt(bio.data()$untransformed.metrics[,met.for.trans()])),silent = T)
     }
+    if (input$trans=="Logit"){
+      t.metric<-try(car::logit(bio.data()$untransformed.metrics[,met.for.trans()]),silent = T)
+    }
+    
     validate(
       need(!(is(t.metric,"try-error")),"")
     )
@@ -363,17 +367,19 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }
     x<-data.frame(read.csv(inuser.site.matchFile$datapath, header=T,strip.white=TRUE))
+    
     if (any(as.vector(x[,1])%in%bio.data.t$Site.List==F)) {
       stop("Site mismatch between biological data and user site matched data")
     } 
-    if (any(apply(x[-c(1),],1,function(x) any(duplicated(unlist(x[which(x!="")]))==T))==T)) {
+    if (any(apply(x,1,function(x) any(duplicated(x[-c(1, which(x==""))]))))) {
       stop("Duplicate Reference sample names detected for one or more test samples")
     } 
-    if (any(apply(x,1,function(x) any(duplicated(unlist(x[which(x!="")]))==T))==T)|any(x[,1]%in%unlist(x[,-c(1)])==T)) {
+    if (any(apply(x,1,function(x) any(duplicated(x[x!=""]))))) {
       stop("A sample cannot be classified as both test and reference")
-    } else {
-      x
-    }
+    } 
+    
+    x
+    
   })
   
   output$usersitematch.table<-renderTable({
@@ -787,7 +793,7 @@ shinyServer(function(input, output, session) {
         colnames<-c(colnames(bio.data.t$Summary.Metrics),c("O:E","Bray-Curtis","CA1","CA2"))
       }
     } else {
-      colnames<-colnames(bio.data.t$Summary.Metrics)[-1]
+      colnames<-colnames(bio.data.t$Summary.Metrics)
     }
     
     checkboxGroupInput("b1", "", choices  = colnames, selected=NULL)#colnames[colnames%in%sel.mets()])
@@ -831,6 +837,16 @@ shinyServer(function(input, output, session) {
     #c(input$b1,input$b2,input$b3,input$b4)
   })
   
+  output$indicator.pairs.plot<-renderPlot({
+    validate(
+      need((length(input$b1)>2&input$b1!=""),"Select at least 2 indicator metrics")
+    )
+
+    pairs(bio.data.t$Summary.Metrics[names(nn.sites()$final.dist),sel.mets()], 
+           diag.panel=panel.hist,
+           upper.panel=panel.smooth,
+           lower.panel=panel.cor) 
+  })
   
   #########################################################
   #Test Site Analysis
@@ -844,13 +860,12 @@ shinyServer(function(input, output, session) {
     if (is.null(nn.sites())){
       return(NULL)
     }
-    if (input$metdata==T & input$mselect==T) {
-      
-      validate(
-        need(if(input$metdata==T & input$mselect==T){FALSE}else{TRUE},"Automated metric selection not available when input data are indicator metrics")
-      )
-      stop("Automated metric selection not available when input data are indicator metrics")
-    }
+    #if (input$metdata==T & input$mselect==T) {
+    #  validate(
+    #    need(if(input$metdata==T & input$mselect==T){FALSE}else{TRUE},"Automated metric selection not available when input data are indicator metrics")
+    #  )
+    #  stop("Automated metric selection not available when input data are indicator metrics")
+    #}
     
     if (input$distance==T & is.null(env.data())){
       validate(
@@ -860,7 +875,7 @@ shinyServer(function(input, output, session) {
     }
     bio.data.t1<-NULL
     bio.data.t1$Summary.Metrics<-bio.data.t$Summary.Metrics[c(names(nn.sites()$final.dist),test.site()),]
-    if(nn.method()!="RDA-ANNA"){
+    if(nn.method()!="RDA-ANNA" & input$metdata==F){
       bio.data.t1$Summary.Metrics<-cbind(bio.data.t1$Summary.Metrics, add.met(Test=bio.data.t$Raw.Data[test.site(),],
                                               Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),]),original=F)
     }
@@ -948,7 +963,7 @@ shinyServer(function(input, output, session) {
     }
     bio.data.t1<-NULL
     bio.data.t1$Summary.Metrics<-bio.data.t$Summary.Metrics[c(names(nn.sites()$final.dist),test.site()),]
-    if(nn.method()!="RDA-ANNA"){
+    if(nn.method()!="RDA-ANNA" & input$metdata==F){
       bio.data.t1$Summary.Metrics<-cbind(bio.data.t1$Summary.Metrics, add.met(Test=bio.data.t$Raw.Data[test.site(),],
                                                                               Reference=bio.data.t$Raw.Data[names(nn.sites()$final.dist),]),original=F)
     }

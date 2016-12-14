@@ -53,9 +53,9 @@ shinyUI(
                                            
                                            fileInput("inbioFile", label = h4("File input - Taxa")),
                                            checkboxInput("metdata",label="Input data are metrics",value=F),
-                                          #numericInput("taxa.names", 
-                                          #              label = h4("Number of rows used for taxa identifiers"), 
-                                          #              value = 2),
+                                          numericInput("taxa.names", 
+                                                        label = h4("Number of rows used for taxa identifiers"), 
+                                                        value = 2),
                                            
                                            numericInput("site.names", 
                                                         label = h4("Number of columns used for site identifiers"), 
@@ -76,7 +76,7 @@ shinyUI(
                                                                     sidebarPanel(
                                                                       uiOutput("sel.met.for.trans"),
                                                                       radioButtons("trans", label = h3("Transformation"),
-                                                                                   choices = list("None" = "None", "Log10" = "Log10", "Log10+1" = "Log10+1", "Square Root" = "Square Root", "Inverse" = "Inverse", "Arcsine Sqare Root"= "Arcsine Sqare Root", "Delete"="Delete"), 
+                                                                                   choices = list("None" = "None", "Log10" = "Log10", "Log10+1" = "Log10+1", "Square Root" = "Square Root", "Inverse" = "Inverse", "Arcsine Sqare Root"= "Arcsine Sqare Root", "Logit" = "Logit", "Delete"="Delete"), 
                                                                                    selected = "None"),
                                                                       actionButton("apply.trans",label="Apply Selection"),
                                                                       tableOutput("met.trans.table")
@@ -227,12 +227,16 @@ shinyUI(
                                            actionButton("selectallmet", label = "Select All"),
                                            actionButton("selectnonemet", label = "Select None"),
                                            br(),
-                                           conditionalPanel("input.metdata==false",
-                                                            conditionalPanel("output.nnmethodselected==1",checkboxInput("mselect","Automatically select indicator metrics for analysis?",value=F)))
+                                           #conditionalPanel("input.metdata==false",
+                                                            #conditionalPanel("output.nnmethodselected==1",
+                                                                             checkboxInput("mselect","Automatically select indicator metrics for analysis?",value=F)
+                                                                             #)
+                                                            #)
                                          ),
                                          mainPanel(
                                            tabsetPanel(type="tabs",
-                                                       tabPanel(title="Select Indicator Metrics",uiOutput("choose_columns1"))
+                                                       tabPanel(title="Select Indicator Metrics",uiOutput("choose_columns1")),
+                                                       tabPanel(title="Indicator Metric Correlations",plotOutput("indicator.pairs.plot"))
                                            )
                                          )
                                        )),
