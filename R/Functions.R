@@ -56,7 +56,7 @@
 #' pcoa.tsa(tsa.results)
 
 
-tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=T, m.select=T,rank=F,na.cutoff=0.7,outbound=0.1) {
+tsa.test<- function(Test, Reference, distance=NULL, outlier.rem=F, m.select=F,rank=F,na.cutoff=0.7,outbound=0.1) {
   Reference<-Reference[rowSums(is.na(Reference))!=ncol(Reference), ]
   raw.data1<-rbind(Reference,Test)
   
