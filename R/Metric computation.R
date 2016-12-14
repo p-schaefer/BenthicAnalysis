@@ -26,10 +26,13 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
     HBI<-data.frame(HBI)
   }
   
+  x[,1:site.fields]<-apply(x[,1:site.fields],2,as.character)
+  
   if (!any(colnames(x) %in% c("V1","X1"))) {
-    x[,1:site.fields]<-apply(x[,1:site.fields],2,as.character)
-    x<-rbind(colnames(x),x)
+    colnames(x)<-gsub(pattern=".", replace=";" ,colnames(x),fixed=T)
+    x<-rbind(as.character(colnames(x)),x)
   }
+  
 
   if (site.fields>1){
     site.names<-apply(as.matrix(x[(tax.fields+1):nrow(x),1:site.fields]),1,FUN=paste0,collapse="",sep="-")# get site names
@@ -109,16 +112,16 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
   summ$'Intolerants.Richness'<-apply(taxa.intol, 1, function(x) length(which(x>0)))
   summ$'Percent.Intolerants'<-adapt.sum(taxa.intol)/abund
   
-  if (tax.fields==2) {
-    taxa.hbi<-taxa[,taxa.names[grep(grep.paste(HBI[,1]),taxa.names)]]
-    t1<-lapply(colnames(taxa.hbi), function(x) substr(x, start=(gregexpr(pattern =';',x)[[1]][1]+1),stop=nchar(x))) #find matches between taxa.hbi and HBI in HBI
-    t3<-match(t1,HBI[,1])
-    if (any(is.na(t3))) {
-      t2<-lapply(taxa.names[grep(grep.paste(t1[which(is.na(t3))]),taxa.names)], function(x) substr(x, stop=(gregexpr(pattern =';',x)[[1]][1]-1),start=1))
-      t3[is.na(t3)]<-match(t2,HBI[,1])
-    }
-    summ$'HBI'<-apply(taxa.hbi,1,function(x) sum(x*HBI[t3, 2])/sum(x))
+  
+  taxa.hbi<-taxa[,taxa.names[grep(grep.paste(HBI[,1]),taxa.names)]]
+  t1<-lapply(colnames(taxa.hbi), function(x) substr(x, start=(gregexpr(pattern =';',x)[[1]][1]+1),stop=nchar(x))) #find matches between taxa.hbi and HBI in HBI
+  t3<-match(t1,HBI[,1])
+  if (any(is.na(t3))) {
+    t2<-lapply(taxa.names[grep(grep.paste(t1[which(is.na(t3))]),taxa.names)], function(x) substr(x, stop=(gregexpr(pattern =';',x)[[1]][1]-1),start=1))
+    t3[is.na(t3)]<-match(t2,HBI[,1])
   }
+  summ$'HBI'<-apply(taxa.hbi,1,function(x) sum(x*HBI[t3, 2])/sum(x))
+  
 
   taxa.rel.cefi<-taxa.rel
   taxa.rel.cefi[taxa.rel.cefi<=0.05]<-0

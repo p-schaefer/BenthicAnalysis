@@ -4,7 +4,7 @@
 \alias{add.met}
 \title{Reference specific Benthic Metric Calculation}
 \usage{
-add.met(Test, Reference)
+add.met(Test, Reference, original = F, tax.fields = 2)
 }
 \arguments{
 \item{Test.taxa}{Output of \code{\link[BenthicAnalysis]{benth.met}}$Raw.Data for the test site}
