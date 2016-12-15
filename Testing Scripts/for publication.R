@@ -11,8 +11,6 @@ YKEnvData[,6]<-log(YKEnvData[,6])
 YKEnvData<-data.frame(apply(YKEnvData,2,scale))
 rownames(YKEnvData)<-bio.data.test$Site.List
 
-#Removal of potentially noisy environmental data?
-YKEnvData<-YKEnvData[,-c(2,3,5)]
 
 #Create output file
 output<-data.frame(matrix(nrow=160,ncol=9))
@@ -24,6 +22,11 @@ output<-rbind(output,output,output,output)
 output$Analysis.type<-c(rep("Original",160),rep("Ad.Met.Sel",160),rep("Ad.Site.Sel",160),rep("Combined",160))
 
 #Computational loop
+#
+#What if you include D0 in the training set?
+#Removal of potentially noisy environmental data?
+#YKEnvData<-YKEnvData[,-c(2,3,5,40,41,10:16)]
+#
 for (i in unique(output$Site)){
   for (n in unique(output$Analysis.type)){
     nn.sites<-site.match(Test=YKEnvData[i,-c(1)], Reference=YKEnvData[1:118,-c(1)],
@@ -53,7 +56,7 @@ for (i in unique(output$Site)){
                                   tsa.result$general.results[6,1],
                                   tsa.result$jacknife[1,1],
                                   tsa.result$tsa.results[4,1])
-    print(i)
-    print(n)
+    #print(i)
+    #print(n)
   }
 }
