@@ -6,20 +6,36 @@ data(YKBioData,envir = environment()) # Biological dataset
 bio.data.test<-benth.met(YKBioData,2,2)
 bio.data<-bio.data.test$Summary.Metrics
 
+#Transform remaining metrics to approximate normality
+bio.data[,grep("Richness",colnames(bio.data))]<-log(bio.data[,grep("Richness",colnames(bio.data))]+1)
+bio.data[,grep("Percent",colnames(bio.data))]<-logit(bio.data[,grep("Percent",colnames(bio.data))])
+bio.data<-bio.data[,-c(5,7:10,11,20,21,24,28)]
+
+
 #scale data, log transform area, rename rows to match bio.data
 YKEnvData[,6]<-log(YKEnvData[,6])
 YKEnvData<-data.frame(apply(YKEnvData,2,scale))
 rownames(YKEnvData)<-bio.data.test$Site.List
 
+#Romeve some environmental variables that add noise to the dataset
+#YKEnvData<-YKEnvData[,-c(2,3,5,40,41,10:16)]
 
 #Create output file
 output<-data.frame(matrix(nrow=160,ncol=9))
 colnames(output)<-c("Site","Class","Mahal.D","Impair.rank","Met.used","n.Mets","n.Ref","jknife","rand.p")
-output$Site<-rownames(bio.data)[119:(119+159)]
+output$Site<-rownames(bio.data)[119:278]
 output$Class<-c(rep("D0",40),rep("D1",40),rep("D2",40),rep("D3",40))
-
 output<-rbind(output,output,output,output)
 output$Analysis.type<-c(rep("Original",160),rep("Ad.Met.Sel",160),rep("Ad.Site.Sel",160),rep("Combined",160))
+
+#What if you include D0 in the training set?
+#output<-data.frame(matrix(nrow=120,ncol=9))
+#colnames(output)<-c("Site","Class","Mahal.D","Impair.rank","Met.used","n.Mets","n.Ref","jknife","rand.p")
+#output$Site<-rownames(bio.data)[159:278]
+#output$Class<-c(rep("D1",40),rep("D2",40),rep("D3",40))
+#output<-rbind(output,output,output,output)
+#output$Analysis.type<-c(rep("Original",120),rep("Ad.Met.Sel",120),rep("Ad.Site.Sel",120),rep("Combined",120))
+
 
 #Computational loop
 #
@@ -60,3 +76,6 @@ for (i in unique(output$Site)){
     #print(n)
   }
 }
+
+
+boxplot(sqrt(as.numeric(output$Mahal.D))~as.factor(output$Analysis.type)+as.factor(output$Class))
