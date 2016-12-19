@@ -15,6 +15,7 @@
 #' @param Reference Data frame of environmental Variables at Reference sites
 #' @param k Numeric, the numer of nearest neighbour reference sites to find. Ignored if NULL
 #' @param adaptive Logical, whether to use adaptive breaks to select nearest neighbour reference sites.
+#' @param ad.factor Power factor used in the inverse-power function uf adaptive==T
 #' @param RDA.reference Data frame containing indicator metric data at reference sites. Row names must match with Reference. If it is supplied the function will perform RDA-ANNA, otherwise ANNA.
 #' @return $final.dist - Vector containing nearest neighbour reference sites to test site as well as the ecological distance of the test site to each reference site.
 #' @return $method - Whether ANNA or RDA-ANNA was used
@@ -45,7 +46,7 @@
 #' plot(nn.sites)
 #' sitematch.plot(nn.sites)
 
-site.match<-function(Test, Reference, k=NULL, adaptive=T, RDA.reference=NULL) {
+site.match<-function(Test, Reference, k=NULL, adaptive=T, ad.factor=1, RDA.reference=NULL) {
   if (any(colnames(Test)%in%colnames(Reference)==F)|
       (ncol(Test)!=ncol(Reference))) {
     stop("Variable name mismatch between test site and reference set")
@@ -118,7 +119,7 @@ site.match<-function(Test, Reference, k=NULL, adaptive=T, RDA.reference=NULL) {
     l<-NULL
     for (i in 3:if (is.null(k)) length(anna.dist) else k){
       l[i]<-diff(anna.dist[1:i],lag=1)[i-2]
-      if (l[i]>(1/(i^2))){
+      if (l[i]>(1/(i^ad.factor))){
         break
       }
     }

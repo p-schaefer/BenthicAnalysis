@@ -53,7 +53,7 @@ for (i in unique(output$Site)){
                      add.met(Test=bio.data.test$Raw.Data[i,],Reference=bio.data.test$Raw.Data[names(nn.sites$final.dist),]))
     
     if (n=="Original"|n=="Ad.Site.Sel") {
-      taxa.data<-taxa.data[,c("Shannon","HBI","O:E","Bray-Curtis")]
+      taxa.data<-taxa.data[,c("Shannon","Percent.EPT","O:E","Bray-Curtis")]
     }
     
     tsa.result<-tsa.test(Test=taxa.data[nrow(taxa.data),],
@@ -72,10 +72,40 @@ for (i in unique(output$Site)){
                                   tsa.result$general.results[6,1],
                                   tsa.result$jacknife[1,1],
                                   tsa.result$tsa.results[4,1])
-    #print(i)
-    #print(n)
   }
 }
 
+output2<-data.frame(matrix(nrow=(160),ncol=10))
+colnames(output2)<-c("Original","Ad.Met.Sel","Ad.Site.Sel","Combined","Sites","Class",
+                     "Original.er",
+                     "Ad.Met.Sel.er",
+                     "Ad.Site.Sel.er",
+                     "Combined.er")
+output2$Sites<-unique(output$Site)
+output2$Class<-c(rep("D0",40),rep("D1",40),rep("D2",40),rep("D3",40))
+
+output2$Original<-output$Impair.rank[output$Analysis.type=="Original"]
+output2$Ad.Met.Sel<-output$Impair.rank[output$Analysis.type=="Ad.Met.Sel"]
+output2$Ad.Site.Sel<-output$Impair.rank[output$Analysis.type=="Ad.Site.Sel"]
+output2$Combined<-output$Impair.rank[output$Analysis.type=="Combined"]
+
+output2$Original.er[output2$Class=="D0" & output2$Original=="Impaired"]<-1
+output2$Ad.Met.Sel.er[output2$Class=="D0" & output2$Ad.Met.Sel=="Impaired"]<-1
+output2$Ad.Site.Sel.er[output2$Class=="D0" & output2$Ad.Site.Sel=="Impaired"]<-1
+output2$Combined.er[output2$Class=="D0" & output2$Combined=="Impaired"]<-1
+
+output2$Original.er[output2$Class%in%c("D1","D2","D3") & output2$Original=="Not Impaired"]<-1
+output2$Ad.Met.Sel.er[output2$Class%in%c("D1","D2","D3") & output2$Ad.Met.Sel=="Not Impaired"]<-1
+output2$Ad.Site.Sel.er[output2$Class%in%c("D1","D2","D3") & output2$Ad.Site.Sel=="Not Impaired"]<-1
+output2$Combined.er[output2$Class%in%c("D1","D2","D3") & output2$Combined=="Not Impaired"]<-1
+
+errors<-data.frame(matrix(nrow=4,ncol=4))
+rownames(errors)<-unique(output$Analysis.type)
+colnames(errors)<-c("D0","D1","D2","D3")
+errors$D0<-colSums(output2[output2$Class=="D0",7:10],na.rm = T)/40
+errors$D1<-colSums(output2[output2$Class=="D1",7:10],na.rm = T)/40
+errors$D2<-colSums(output2[output2$Class=="D2",7:10],na.rm = T)/40
+errors$D3<-colSums(output2[output2$Class=="D3",7:10],na.rm = T)/40
+errors
 
 boxplot(sqrt(as.numeric(output$Mahal.D))~as.factor(output$Analysis.type)+as.factor(output$Class))

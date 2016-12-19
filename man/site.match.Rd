@@ -4,7 +4,8 @@
 \alias{site.match}
 \title{Match test sites with reference sites}
 \usage{
-site.match(Test, Reference, k = NULL, adaptive = T, RDA.reference = NULL)
+site.match(Test, Reference, k = NULL, adaptive = T, ad.factor = 1,
+  RDA.reference = NULL)
 }
 \arguments{
 \item{Test}{Vector of environmental variables at Test site}
@@ -14,6 +15,8 @@ site.match(Test, Reference, k = NULL, adaptive = T, RDA.reference = NULL)
 \item{k}{Numeric, the numer of nearest neighbour reference sites to find. Ignored if NULL}
 
 \item{adaptive}{Logical, whether to use adaptive breaks to select nearest neighbour reference sites.}
+
+\item{ad.factor}{Power factor used in the inverse-power function uf adaptive==T}
 
 \item{RDA.reference}{Data frame containing indicator metric data at reference sites. Row names must match with Reference. If it is supplied the function will perform RDA-ANNA, otherwise ANNA.}
 }
