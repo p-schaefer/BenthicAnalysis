@@ -153,7 +153,7 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
 
   summ[is.nan.data.frame(summ)]<-NA
   summ[is.inf.data.frame(summ)]<-NA
-  summ<-summ[,apply(summ,2,my.sum)!=0]
+  summ<-summ[,(apply(summ,2,my.sum)!=0 & !is.na(apply(summ,2,my.sum)))]
 
   output<-NULL
   output$Summary.Metrics<-summ
