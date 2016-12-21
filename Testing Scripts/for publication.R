@@ -240,6 +240,9 @@ errors
 data(GLEnvData,envir = environment()) # Environmental dataset
 data(GLBioData,envir = environment()) # Biological dataset
 
+GLEnvData<-GLEnvData[-c(grep("1216",rownames(GLEnvData))),-c(21)]
+GLBioData<-GLBioData[-c(grep("1216",GLBioData$V1)),]
+
 #Calculate summary Metrics
 bio.data.test<-benth.met(GLBioData,2,2)
 

@@ -17,6 +17,14 @@ YKEnvData[,6]<-log(YKEnvData[,6])
 YKEnvData<-data.frame(apply(YKEnvData,2,scale))
 rownames(YKEnvData)<-bio.data.test$Site.List
 
+#PLotting
+p1<-rda(YKEnvData[YKEnvData$Ref>0,-c(1)])
+p2<-predict(p1,newdata = YKEnvData[YKEnvData$Ref<0,-c(1)],type="wa",scaling=1)
+plot(p1,display="sites",scaling=1)
+points(x=p2[,1],y=p2[,2],pch=16)
+#points(p1,display="species",scaling=1)
+legend("topright",legend=c("Reference","Test"),pch=c(1,16))
+
 #Romeve some environmental variables that add noise to the dataset
 #YKEnvData<-YKEnvData[,-c(2,3,5,40,41,10:16)]
 
@@ -132,6 +140,13 @@ ACTEnvData[,7]<-log(ACTEnvData[,7])
 ACTEnvData<-data.frame(apply(ACTEnvData,2,scale))
 rownames(ACTEnvData)<-bio.data.test$Site.List
 
+p1<-rda(ACTEnvData[ACTEnvData$Ref>0,-c(1)])
+p2<-predict(p1,newdata = ACTEnvData[ACTEnvData$Ref<0,-c(1)],type="wa",scaling=1)
+plot(p1,display="sites",scaling=1)
+points(x=p2[,1],y=p2[,2],pch=16)
+#points(p1,display="species",scaling=1)
+legend("topright",legend=c("Reference","Test"),pch=c(1,16))
+
 #Romeve some environmental variables that add noise to the dataset
 #YKEnvData<-YKEnvData[,-c(2,3,5,40,41,10:16)]
 
@@ -233,6 +248,9 @@ errors
 data(GLEnvData,envir = environment()) # Environmental dataset
 data(GLBioData,envir = environment()) # Biological dataset
 
+GLEnvData<-GLEnvData[-c(grep("1216",rownames(GLEnvData))),]
+GLBioData<-GLBioData[-c(grep("1216",GLBioData$V1)),]
+
 #Calculate summary Metrics
 bio.data.test<-benth.met(GLBioData,2,2)
 
@@ -268,9 +286,16 @@ GLEnvData<-rbind(GLEnvData[grep("T",rownames(GLEnvData)),],
                  GLEnvData[grep("D1",rownames(GLEnvData)),],
                  GLEnvData[grep("D2",rownames(GLEnvData)),],
                  GLEnvData[grep("D3",rownames(GLEnvData)),])
-
+GLEnvData<-GLEnvData[,-c(21)]
 GLEnvData<-data.frame(apply(GLEnvData,2,scale))
 rownames(GLEnvData)<-rownames(bio.data.test$Summary.Metrics)
+
+p1<-rda(GLEnvData[GLEnvData$Ref>0,-c(1)])
+p2<-predict(p1,newdata = GLEnvData[GLEnvData$Ref<0,-c(1)],type="wa",scaling=1)
+plot(p1,display="sites",scaling=1)
+points(x=p2[,1],y=p2[,2],pch=16)
+#points(p1,display="species",scaling=1)
+legend("topright",legend=c("Reference","Test"),pch=c(1,16))
 
 #Romeve some environmental variables that add noise to the dataset
 #YKEnvData<-YKEnvData[,-c(2,3,5,40,41,10:16)]
