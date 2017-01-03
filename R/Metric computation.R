@@ -37,8 +37,10 @@ benth.met<-function(x,tax.fields=2,site.fields,HBI=NULL) {
   if (site.fields>1){
     site.names<-apply(as.matrix(x[(tax.fields+1):nrow(x),1:site.fields]),1,FUN=paste0,collapse="",sep="-")# get site names
     site.names<-substr(site.names,start=1,stop=nchar(site.names)-1)
+    site.names<-gsub(" ","",site.names)
   } else if (site.fields==1){
     site.names<-x[(tax.fields+1):nrow(x),1]
+    site.names<-gsub(" ","",site.names)
   }
   
   taxa.names<-apply(as.matrix(x[1:tax.fields,(site.fields+1):ncol(x)]),2,FUN=paste0,collapse="",sep=";")# get taxa names
