@@ -1,3 +1,7 @@
+write.excel <- function(x,row.names=FALSE,col.names=TRUE,...) {
+  write.table(x,"clipboard",sep="\t",row.names=row.names,col.names=col.names,...)
+}
+
 #load datasets
 data(YKEnvData,envir = environment()) # Environmental dataset
 data(YKBioData,envir = environment()) # Biological dataset
@@ -17,16 +21,23 @@ YKEnvData[,6]<-log(YKEnvData[,6])
 YKEnvData<-data.frame(apply(YKEnvData,2,scale))
 rownames(YKEnvData)<-bio.data.test$Site.List
 
+#PLotting
+
+
 #Romeve some environmental variables that add noise to the dataset
 #YKEnvData<-YKEnvData[,-c(2,3,5,40,41,10:16)]
 
+n.train<-length(which(YKBioData$V2==1))
+n.test<-(nrow(YKBioData)-2)-n.train
+
 #Create output file
-output<-data.frame(matrix(nrow=160,ncol=9))
-colnames(output)<-c("Site","Class","Mahal.D","Impair.rank","Met.used","n.Mets","n.Ref","jknife","rand.p")
-output$Site<-rownames(bio.data)[119:278]
-output$Class<-c(rep("D0",40),rep("D1",40),rep("D2",40),rep("D3",40))
+output<-data.frame(matrix(nrow=n.test,ncol=18))
+colnames(output)<-c("Site","Class","Mahal.D","Impair.rank","Met.used","n.Mets","n.Ref","jknife","rand.p",
+                    "M1","M2","M3","M4","M5","M6","M7","M8","M9")
+output$Site<-rownames(bio.data)[(n.train+1):(nrow(YKBioData)-2)]
+output$Class<-c(rep("D0",n.test/4),rep("D1",n.test/4),rep("D2",n.test/4),rep("D3",n.test/4))
 output<-rbind(output,output,output,output)
-output$Analysis.type<-c(rep("Original",160),rep("Ad.Met.Sel",160),rep("Ad.Site.Sel",160),rep("Combined",160))
+output$Analysis.type<-c(rep("Original",n.test),rep("Ad.Met.Sel",n.test),rep("Ad.Site.Sel",n.test),rep("Combined",n.test))
 
 #What if you include D0 in the training set?
 #output<-data.frame(matrix(nrow=120,ncol=9))
@@ -73,17 +84,21 @@ for (i in unique(output$Site)){
                                   tsa.result$general.results[6,1],
                                   tsa.result$jacknife[1,1],
                                   tsa.result$tsa.results[4,1])
+    
+    if (n=="Combined"|n=="Ad.Met.Sel") {
+      output[(output$Site==i & output$Analysis.type==n),10:(9+length(tsa.result$selected.metrics))]<-tsa.result$selected.metrics
+    }
   }
 }
 
-output2<-data.frame(matrix(nrow=(160),ncol=10))
+output2<-data.frame(matrix(nrow=(n.test),ncol=10))
 colnames(output2)<-c("Original","Ad.Met.Sel","Ad.Site.Sel","Combined","Sites","Class",
                      "Original.er",
                      "Ad.Met.Sel.er",
                      "Ad.Site.Sel.er",
                      "Combined.er")
 output2$Sites<-unique(output$Site)
-output2$Class<-c(rep("D0",40),rep("D1",40),rep("D2",40),rep("D3",40))
+output2$Class<-c(rep("D0",n.test/4),rep("D1",n.test/4),rep("D2",n.test/4),rep("D3",n.test/4))
 
 output2$Original<-output$Impair.rank[output$Analysis.type=="Original"]
 output2$Ad.Met.Sel<-output$Impair.rank[output$Analysis.type=="Ad.Met.Sel"]
@@ -103,14 +118,85 @@ output2$Combined.er[output2$Class%in%c("D1","D2","D3") & output2$Combined=="Not 
 errors<-data.frame(matrix(nrow=4,ncol=4))
 rownames(errors)<-unique(output$Analysis.type)
 colnames(errors)<-c("D0","D1","D2","D3")
-errors$D0<-colSums(output2[output2$Class=="D0",7:10],na.rm = T)/40
-errors$D1<-colSums(output2[output2$Class=="D1",7:10],na.rm = T)/40
-errors$D2<-colSums(output2[output2$Class=="D2",7:10],na.rm = T)/40
-errors$D3<-colSums(output2[output2$Class=="D3",7:10],na.rm = T)/40
+errors$D0<-colSums(output2[output2$Class=="D0",7:10],na.rm = T)/(n.test/4)
+errors$D1<-colSums(output2[output2$Class=="D1",7:10],na.rm = T)/(n.test/4)
+errors$D2<-colSums(output2[output2$Class=="D2",7:10],na.rm = T)/(n.test/4)
+errors$D3<-colSums(output2[output2$Class=="D3",7:10],na.rm = T)/(n.test/4)
 errors
 
-boxplot(sqrt(as.numeric(output$Mahal.D))~as.factor(output$Analysis.type)+as.factor(output$Class))
+mets.used<-data.frame(matrix(nrow=n.test,ncol=4))
+colnames(mets.used)<-c("Site","D1","D2","D3")
+mets.used[,1]<-unique(output$Site)[1:(n.test/4)]
+mets.used[,2]<-apply(output[output$Analysis.type=="Combined" & output$Class=="D1",10:18],1,function(x)paste(x[!is.na(x)], collapse=","))
+mets.used[,3]<-apply(output[output$Analysis.type=="Combined" & output$Class=="D2",10:18],1,function(x)paste(x[!is.na(x)], collapse=","))
+mets.used[,4]<-apply(output[output$Analysis.type=="Combined" & output$Class=="D3",10:18],1,function(x)paste(x[!is.na(x)], collapse=","))
 
+
+output[,10:18]<-apply(output[,10:18],2,function(x) as.numeric(factor(x=x,levels=c(colnames(bio.data),"O:E","Bray-Curtis","CA1","CA2"))))
+output$met.numbs[output$Analysis.type=="Combined"]<-apply(output[output$Analysis.type=="Combined",10:18],1,function(x)paste(x[!is.na(x)],collapse=","))
+
+for (i in sort(unique(unlist(output[,10:18])))){
+  eval(parse(text=paste0("output$gr",i,"<-NA")))
+  eval(parse(text=paste0("output$gr",i,"<-apply(output[,10:18],1,function(x) any(x==i))")))
+  #eval(parse(text=paste0("output$gr",i,"[is.na(output$gr",i,")]<-0")))
+  eval(parse(text=paste0("output$gr",i,"[output$gr",i,"==T]<-1")))
+}
+
+sort(colSums(output[output$Analysis.type=="Combined" & output$Class=="D0",21:ncol(output)],na.rm = T))
+
+p1<-rda(YKEnvData[YKEnvData$Ref>0,-c(1)])
+p2<-predict(p1,newdata = YKEnvData[YKEnvData$Ref<0,-c(1)][1:(n.test/4),],type="wa",scaling=1)
+plot(p1,display="sites",scaling=1,cex=0.5,pch=16,
+     main="YK Selected Metrics",
+     xlab=paste0("PC1 (",signif(p1$CA$eig[1]/sum(p1$CA$eig)*100,4),"%)"),
+     ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"))#,
+     #ylim=c(-0.20,0.20))
+#plot(x=p1$CA$u[,1],y=p1$CA$u[,2],cex=0.5,pch=16,
+#     main="YK Number of Metrics",
+#     xlab=paste0("PC1 (",signif(p1$CA$eig[1]/sum(p1$CA$eig)*100,4),"%)"),
+#     ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"),
+#     ylim=c(-0.20,0.20))
+points(x=p2[,1],y=p2[,2],pch=16,cex=0.5,col="red")
+#points(p1,display="species",scaling=1)
+legend("topright",legend=c("Reference","Test"),pch=16,col=c("black","red"))
+for(i in colnames(output)[21:ncol(output)]){
+  ordiellipse(ord=p2,groups=as.factor(output[output$Analysis.type=="Combined" & output$Class=="D3",i]),
+              scaling=1,display="sites",kind="sd")
+}
+#text(x=p2[,1],y=p2[,2],pos=2, cex=1.0,col="white",
+#     labels=output[output$Analysis.type=="Combined" & output$Class=="D0","n.Ref"])
+#text(x=p2[,1],y=p2[,2],pos=2, cex=0.7,
+#     labels=output[output$Analysis.type=="Combined" & output$Class=="D0","n.Ref"])
+#text(x=p2[,1],y=p2[,2],pos=2, cex=0.7,
+#     labels=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
+library(wordcloud)
+textplot(x=p2[1:40,1],
+         y=p2[1:40,2],
+         new=F,cex=0.6,
+         words=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
+
+textplot(x=p2[1:40,1],
+         y=p2[1:40,2],
+         new=F,cex=0.8,
+         words=output[output$Analysis.type=="Combined" & output$Class=="D3","n.Ref"])
+
+for (i in sort(unique(unlist(output[,10:18])))){
+  eval(parse(text=paste0("output$gr",i,"<-NA")))
+  eval(parse(text=paste0("output$gr",i,"<-apply(output[,10:18],1,function(x) any(x==i))")))
+  eval(parse(text=paste0("output$gr",i,"[is.na(output$gr",i,")]<-0")))
+  eval(parse(text=paste0("output$gr",i,"[output$gr",i,"==T]<-1")))
+}
+
+
+sig.t<-NA
+for(i in colnames(output)[21:ncol(output)]){
+  rhs<-ordiareatest(ord=p2,groups=as.factor(output[output$Analysis.type=='Combined' & output$Class=='D3',i]),area='ellipse',permutations=999,kind = "sd")
+  eval(parse(text=paste0("sig.t$",i,"<-",rhs$pvalues[2])))
+}
+
+library(fpc)
+p1<-pamk(output[,21:52],krange=(1:10))
+p2<-cascadeKM(output[,21:52],1,10)
 ##############################################################################################################################
 #
 #
@@ -135,6 +221,13 @@ ACTEnvData[,7]<-log(ACTEnvData[,7])
 ACTEnvData<-data.frame(apply(ACTEnvData,2,scale))
 rownames(ACTEnvData)<-bio.data.test$Site.List
 
+p1<-rda(ACTEnvData[ACTEnvData$Ref>0,-c(1)])
+p2<-predict(p1,newdata = ACTEnvData[ACTEnvData$Ref<0,-c(1)],type="wa",scaling=1)
+plot(p1,display="sites",scaling=1)
+points(x=p2[,1],y=p2[,2],pch=16)
+#points(p1,display="species",scaling=1)
+legend("topright",legend=c("Reference","Test"),pch=c(1,16))
+
 #Romeve some environmental variables that add noise to the dataset
 #YKEnvData<-YKEnvData[,-c(2,3,5,40,41,10:16)]
 
@@ -142,8 +235,9 @@ n.train<-length(which(ACTBioData$V2==1))
 n.test<-(nrow(ACTBioData)-2)-n.train
 
 #Create output file
-output<-data.frame(matrix(nrow=n.test,ncol=9))
-colnames(output)<-c("Site","Class","Mahal.D","Impair.rank","Met.used","n.Mets","n.Ref","jknife","rand.p")
+output<-data.frame(matrix(nrow=n.test,ncol=18))
+colnames(output)<-c("Site","Class","Mahal.D","Impair.rank","Met.used","n.Mets","n.Ref","jknife","rand.p",
+                    "M1","M2","M3","M4","M5","M6","M7","M8","M9")
 output$Site<-rownames(bio.data)[(n.train+1):(nrow(ACTBioData)-2)]
 output$Class<-c(rep("D0",n.test/4),rep("D1",n.test/4),rep("D2",n.test/4),rep("D3",n.test/4))
 output<-rbind(output,output,output,output)
@@ -194,6 +288,10 @@ for (i in unique(output$Site)){
                                                               tsa.result$general.results[6,1],
                                                               tsa.result$jacknife[1,1],
                                                               tsa.result$tsa.results[4,1])
+    if (n=="Combined"|n=="Ad.Met.Sel") {
+      output[(output$Site==i & output$Analysis.type==n),10:(9+length(tsa.result$selected.metrics))]<-tsa.result$selected.metrics
+    }
+    
   }
 }
 
@@ -229,6 +327,52 @@ errors$D1<-colSums(output2[output2$Class=="D1",7:10],na.rm = T)/(n.test/4)
 errors$D2<-colSums(output2[output2$Class=="D2",7:10],na.rm = T)/(n.test/4)
 errors$D3<-colSums(output2[output2$Class=="D3",7:10],na.rm = T)/(n.test/4)
 errors
+
+mets.used<-data.frame(matrix(nrow=n.test,ncol=4))
+colnames(mets.used)<-c("Site","D1","D2","D3")
+mets.used[,1]<-unique(output$Site)[1:(n.test/4)]
+mets.used[,2]<-apply(output[output$Analysis.type=="Combined" & output$Class=="D1",10:18],1,function(x)paste(x[!is.na(x)], collapse=","))
+mets.used[,3]<-apply(output[output$Analysis.type=="Combined" & output$Class=="D2",10:18],1,function(x)paste(x[!is.na(x)], collapse=","))
+mets.used[,4]<-apply(output[output$Analysis.type=="Combined" & output$Class=="D3",10:18],1,function(x)paste(x[!is.na(x)], collapse=","))
+
+
+output[,10:18]<-apply(output[,10:18],2,function(x) as.numeric(factor(x=x,levels=c(colnames(bio.data),"O:E","Bray-Curtis","CA1","CA2"))))
+output$met.numbs[output$Analysis.type=="Combined"]<-apply(output[output$Analysis.type=="Combined",10:18],1,function(x)paste(x[!is.na(x)],collapse=","))
+for (i in sort(unique(unlist(output[,10:18])))){
+  eval(parse(text=paste0("output$gr",i,"<-NA")))
+  eval(parse(text=paste0("output$gr",i,"<-apply(output[,10:18],1,function(x) any(x==i))")))
+  eval(parse(text=paste0("output$gr",i,"[is.na(output$gr",i,")]<-0")))
+  eval(parse(text=paste0("output$gr",i,"[output$gr",i,"==T]<-1")))
+}
+
+sort(colSums(output[output$Analysis.type=="Combined" & output$Class=="D0",21:ncol(output)],na.rm = T))
+
+p1<-rda(ACTEnvData[ACTEnvData$Ref>0,-c(1)])
+p2<-predict(p1,newdata = ACTEnvData[ACTEnvData$Ref<0,-c(1)],type="wa")#,scaling=3)
+#plot(p1,display="sites",scaling=1)
+plot(x=p1$CA$u[,1],y=p1$CA$u[,2],cex=0.5,pch=16,
+     main="ACT Selected Metrics",
+     xlab=paste0("PC1 (",signif(p1$CA$eig[1]/sum(p1$CA$eig)*100,4),"%)"),
+     ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"))
+points(x=p2[,1],y=p2[,2],pch=16,cex=0.5,col="red")
+#points(p1,display="species",scaling=1)
+legend("topright",legend=c("Reference","Test"),pch=16,col=c("black","red"))
+#text(x=p2[,1],y=p2[,2],pos=2, cex=1.0,col="white",
+#     labels=output[output$Analysis.type=="Combined" & output$Class=="D0","n.Ref"])
+#text(x=p2[,1],y=p2[,2],pos=2, cex=0.7,
+#     labels=output[output$Analysis.type=="Combined" & output$Class=="D0","n.Ref"])
+#text(x=p2[,1],y=p2[,2],pos=2, cex=0.7,
+#     labels=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
+
+textplot(x=p2[1:(n.test/4),1],
+         y=p2[1:(n.test/4),2],
+         new=F,cex=0.6,
+         words=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
+
+textplot(x=p2[1:(n.test/4),1],
+         y=p2[1:(n.test/4),2],
+         new=F,cex=0.7,
+         words=output[output$Analysis.type=="Combined" & output$Class=="D3","n.Ref"])
 
 ######################################################################################################
 #
@@ -282,6 +426,13 @@ GLEnvData<-rbind(GLEnvData[grep("T",rownames(GLEnvData)),],
 GLEnvData<-data.frame(apply(GLEnvData,2,scale))
 rownames(GLEnvData)<-rownames(bio.data.test$Summary.Metrics)
 
+p1<-rda(GLEnvData[GLEnvData$Ref>0,-c(1)])
+p2<-predict(p1,newdata = GLEnvData[GLEnvData$Ref<0,-c(1)],type="wa",scaling=1)
+plot(p1,display="sites",scaling=1)
+points(x=p2[,1],y=p2[,2],pch=16)
+#points(p1,display="species",scaling=1)
+legend("topright",legend=c("Reference","Test"),pch=c(1,16))
+
 #Romeve some environmental variables that add noise to the dataset
 #YKEnvData<-YKEnvData[,-c(2,3,5,40,41,10:16)]
 
@@ -289,8 +440,9 @@ n.train<-length(which(GLBioData$V2==1))
 n.test<-(nrow(GLBioData)-2)-n.train
 
 #Create output file
-output<-data.frame(matrix(nrow=n.test,ncol=9))
-colnames(output)<-c("Site","Class","Mahal.D","Impair.rank","Met.used","n.Mets","n.Ref","jknife","rand.p")
+output<-data.frame(matrix(nrow=n.test,ncol=18))
+colnames(output)<-c("Site","Class","Mahal.D","Impair.rank","Met.used","n.Mets","n.Ref","jknife","rand.p",
+                    "M1","M2","M3","M4","M5","M6","M7","M8","M9")
 output$Site<-rownames(bio.data)[(n.train+1):(nrow(GLBioData)-2)]
 output$Class<-c(rep("D0",n.test/4),rep("D1",n.test/4),rep("D2",n.test/4),rep("D3",n.test/4))
 output<-rbind(output,output,output,output)
@@ -341,6 +493,10 @@ for (i in unique(output$Site)){
                                                               tsa.result$general.results[6,1],
                                                               tsa.result$jacknife[1,1],
                                                               tsa.result$tsa.results[4,1])
+    if (n=="Combined"|n=="Ad.Met.Sel") {
+      output[(output$Site==i & output$Analysis.type==n),10:(9+length(tsa.result$selected.metrics))]<-tsa.result$selected.metrics
+    }
+    
   }
 }
 
@@ -377,6 +533,52 @@ errors$D2<-colSums(output2[output2$Class=="D2",7:10],na.rm = T)/(n.test/4)
 errors$D3<-colSums(output2[output2$Class=="D3",7:10],na.rm = T)/(n.test/4)
 errors
 
+
+mets.used<-data.frame(matrix(nrow=n.test,ncol=4))
+colnames(mets.used)<-c("Site","D1","D2","D3")
+mets.used[,1]<-unique(output$Site)[1:(n.test/4)]
+mets.used[,2]<-apply(output[output$Analysis.type=="Combined" & output$Class=="D1",10:18],1,function(x)paste(x[!is.na(x)], collapse=","))
+mets.used[,3]<-apply(output[output$Analysis.type=="Combined" & output$Class=="D2",10:18],1,function(x)paste(x[!is.na(x)], collapse=","))
+mets.used[,4]<-apply(output[output$Analysis.type=="Combined" & output$Class=="D3",10:18],1,function(x)paste(x[!is.na(x)], collapse=","))
+
+
+output[,10:18]<-apply(output[,10:18],2,function(x) as.numeric(factor(x=x,levels=c(colnames(bio.data),"O:E","Bray-Curtis","CA1","CA2"))))
+output$met.numbs[output$Analysis.type=="Combined"]<-apply(output[output$Analysis.type=="Combined",10:18],1,function(x)paste(x[!is.na(x)],collapse=","))
+for (i in sort(unique(unlist(output[,10:18])))){
+  eval(parse(text=paste0("output$gr",i,"<-NA")))
+  eval(parse(text=paste0("output$gr",i,"<-apply(output[,10:18],1,function(x) any(x==i))")))
+  eval(parse(text=paste0("output$gr",i,"[is.na(output$gr",i,")]<-0")))
+  eval(parse(text=paste0("output$gr",i,"[output$gr",i,"==T]<-1")))
+}
+
+sort(colSums(output[output$Analysis.type=="Combined" & output$Class=="D0",21:ncol(output)],na.rm = T))
+
+p1<-rda(GLEnvData[GLEnvData$Ref>0,-c(1)])
+p2<-predict(p1,newdata = GLEnvData[GLEnvData$Ref<0,-c(1)],type="wa")#,scaling=3)
+#plot(p1,display="sites",scaling=1)
+plot(x=p1$CA$u[,1],y=p1$CA$u[,2],cex=0.5,pch=16,
+     main="GL Selected Metrics",
+     xlab=paste0("PC1 (",signif(p1$CA$eig[1]/sum(p1$CA$eig)*100,4),"%)"),
+     ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"))
+points(x=p2[,1],y=p2[,2],pch=16,cex=0.5,col="red")
+#points(p1,display="species",scaling=1)
+legend("topright",legend=c("Reference","Test"),pch=16,col=c("black","red"))
+#text(x=p2[,1],y=p2[,2],pos=2, cex=1.0,col="white",
+#     labels=output[output$Analysis.type=="Combined" & output$Class=="D0","n.Ref"])
+#text(x=p2[,1],y=p2[,2],pos=2, cex=0.7,
+#     labels=output[output$Analysis.type=="Combined" & output$Class=="D0","n.Ref"])
+#text(x=p2[,1],y=p2[,2],pos=2, cex=0.7,
+#     labels=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
+
+textplot(x=p2[1:40,1],
+         y=p2[1:40,2],
+         new=F,cex=0.7,
+         words=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
+
+textplot(x=p2[1:40,1],
+         y=p2[1:40,2],
+         new=F,cex=0.8,
+         words=output[output$Analysis.type=="Combined" & output$Class=="D3","n.Ref"])
 
 ##########################################################################################
 #
