@@ -8,7 +8,7 @@ bio.data<-bio.data.test$Summary.Metrics
 
 #Transform remaining metrics to approximate normality
 bio.data[,grep("Richness",colnames(bio.data))]<-log(bio.data[,grep("Richness",colnames(bio.data))]+1)
-bio.data[,grep("Percent",colnames(bio.data))]<-logit(bio.data[,grep("Percent",colnames(bio.data))])
+bio.data[,grep("Percent",colnames(bio.data))]<-car::logit(bio.data[,grep("Percent",colnames(bio.data))])
 bio.data<-bio.data[,-c(5,7:10,11,20,21,24,28)]
 
 
@@ -57,7 +57,7 @@ output$Analysis.type<-c(rep("Original",n.test),rep("Ad.Site.Sel",n.test))
 for (i in unique(output$Site)){
   for (n in unique(output$Analysis.type)){
     nn.sites<-site.match(Test=YKEnvData[i,-c(1)], Reference=YKEnvData[1:n.train,-c(1)],
-                         RDA.ref=bio.data[c(rownames(bio.data)[1:n.train]),c("Percent.Dominance","Richness","Percent.ICHAEBO","Shannon")],
+                         #RDA.ref=bio.data[c(rownames(bio.data)[1:n.train]),c("Percent.Dominance","Richness","Percent.ICHAEBO","Shannon")],
                          k=if (n=="Ad.Site.Sel") {NULL} else {30},
                          adaptive=if (n=="Ad.Site.Sel") {T} else {F},
                          ad.factor = 2, ad.constant = 1)

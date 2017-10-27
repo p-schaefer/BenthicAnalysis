@@ -2,6 +2,36 @@ write.excel <- function(x,row.names=FALSE,col.names=TRUE,...) {
   write.table(x,"clipboard",sep="\t",row.names=row.names,col.names=col.names,...)
 }
 
+textplot2 <- function(x, 
+                      y, 
+                      words, 
+                      cex = 1, 
+                      pch = 16, 
+                      pointcolor = "red", 
+                      new = TRUE,
+                      show.lines=TRUE, 
+                      ...){
+  if(new)
+    plot(x,y,type="n",...)
+  lay <- wordlayout(x,y,words,cex,...)
+  if(show.lines){
+    for(i in 1:length(x)){
+      xl <- lay[i,1]
+      yl <- lay[i,2]
+      w <- lay[i,3]
+      h <- lay[i,4]
+      if(x[i]<xl || x[i]>xl+w ||
+         y[i]<yl || y[i]>yl+h){
+        points(x[i],y[i],pch= pch,col= pointcolor,cex= .5)
+        nx <- xl+.5*w
+        ny <- yl+.5*h
+        lines(c(x[i],nx),c(y[i],ny),col="grey")
+      }
+    }
+  }
+  text(lay[,1]+.5*lay[,3],lay[,2]+.5*lay[,4],words,cex = cex,...)
+}
+
 #load datasets
 data(YKEnvData,envir = environment()) # Environmental dataset
 data(YKBioData,envir = environment()) # Biological dataset
@@ -12,7 +42,7 @@ bio.data<-bio.data.test$Summary.Metrics
 
 #Transform remaining metrics to approximate normality
 bio.data[,grep("Richness",colnames(bio.data))]<-log(bio.data[,grep("Richness",colnames(bio.data))]+1)
-bio.data[,grep("Percent",colnames(bio.data))]<-logit(bio.data[,grep("Percent",colnames(bio.data))])
+bio.data[,grep("Percent",colnames(bio.data))]<-car::logit(bio.data[,grep("Percent",colnames(bio.data))])
 bio.data<-bio.data[,-c(5,7:10,11,20,21,24,28)]
 
 
@@ -145,9 +175,11 @@ for (i in sort(unique(unlist(output[,10:18])))){
 sort(colSums(output[output$Analysis.type=="Combined" & output$Class=="D0",21:ncol(output)],na.rm = T))
 
 p1<-rda(YKEnvData[YKEnvData$Ref>0,-c(1)])
+t1<-plot(p1,scaling=1)
+
 p2<-predict(p1,newdata = YKEnvData[YKEnvData$Ref<0,-c(1)][1:(n.test/4),],type="wa",scaling=1)
-plot(p1,display="sites",scaling=1,cex=0.5,pch=16,
-     main="YK Selected Metrics",
+plot(p1,display="sites",scaling=1,cex=0.3,pch=16,col="black",type="n",
+     main="YT Site Matching",
      xlab=paste0("PC1 (",signif(p1$CA$eig[1]/sum(p1$CA$eig)*100,4),"%)"),
      ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"))#,
      #ylim=c(-0.20,0.20))
@@ -156,9 +188,10 @@ plot(p1,display="sites",scaling=1,cex=0.5,pch=16,
 #     xlab=paste0("PC1 (",signif(p1$CA$eig[1]/sum(p1$CA$eig)*100,4),"%)"),
 #     ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"),
 #     ylim=c(-0.20,0.20))
-points(x=p2[,1],y=p2[,2],pch=16,cex=0.5,col="red")
+points(x=t1$sites[,1],y=t1$sites[,2],pch=16,cex=0.6,col="darkgrey")
+points(x=p2[,1],y=p2[,2],pch=16,cex=0.8,col="black")
 #points(p1,display="species",scaling=1)
-legend("topright",legend=c("Reference","Test"),pch=16,col=c("black","red"))
+legend("topright",legend=c("Reference","Test"),pch=c(16,16),pt.cex=c(0.6,0.8),col=c("darkgrey","black"))
 for(i in colnames(output)[21:ncol(output)]){
   ordiellipse(ord=p2,groups=as.factor(output[output$Analysis.type=="Combined" & output$Class=="D3",i]),
               scaling=1,display="sites",kind="sd")
@@ -172,13 +205,13 @@ for(i in colnames(output)[21:ncol(output)]){
 library(wordcloud)
 textplot(x=p2[1:40,1],
          y=p2[1:40,2],
-         new=F,cex=0.6,
-         words=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
-
-textplot(x=p2[1:40,1],
-         y=p2[1:40,2],
          new=F,cex=0.8,
          words=output[output$Analysis.type=="Combined" & output$Class=="D3","n.Ref"])
+
+textplot2(x=p2[1:40,1]+0.05,
+         y=p2[1:40,2],
+         new=F,cex=0.8,
+         words=output[output$Analysis.type=="Combined" & output$Class=="D3","n.Ref"],pointcolor = "black")
 
 for (i in sort(unique(unlist(output[,10:18])))){
   eval(parse(text=paste0("output$gr",i,"<-NA")))
@@ -197,6 +230,23 @@ for(i in colnames(output)[21:ncol(output)]){
 library(fpc)
 p1<-pamk(output[,21:52],krange=(1:10))
 p2<-cascadeKM(output[,21:52],1,10)
+
+
+#Create data table with env and bio distances for all pairwise combinations
+library(cluster)
+
+p1<-rda(scale(YKEnvData[1:(n.train+(n.test/4)),-c(1)]))
+#p2<-rda(scale(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),colSums(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),])>(ncol(bio.data.test$Raw.Data)*0.1)]))
+
+env.dist<-daisy(p1$CA$u[,1:4], metric="euclidean",weights=(p1$CA$eig/sum(p1$CA$eig))[1:4])
+#env.dist<-dist(p1$CA$u)
+#bio.dist<-dist(p2$CA$u)
+bio.dist<-vegdist(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),colSums(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),])>(ncol(bio.data.test$Raw.Data)*0.1)],method="bray")
+
+m <- data.frame(t(combn(rownames(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),]),2)), as.numeric(bio.dist),as.numeric(env.dist))
+
+smoothScatter(m$as.numeric.bio.dist,m$as.numeric.env.dist, main="YT",xlab="Biological Distance", ylab="Habitat Distance")
+abline(lm(m$as.numeric.env.dist~m$as.numeric.bio.dist),lwd=2)
 ##############################################################################################################################
 #
 #
@@ -348,31 +398,59 @@ for (i in sort(unique(unlist(output[,10:18])))){
 sort(colSums(output[output$Analysis.type=="Combined" & output$Class=="D0",21:ncol(output)],na.rm = T))
 
 p1<-rda(ACTEnvData[ACTEnvData$Ref>0,-c(1)])
-p2<-predict(p1,newdata = ACTEnvData[ACTEnvData$Ref<0,-c(1)],type="wa")#,scaling=3)
-#plot(p1,display="sites",scaling=1)
-plot(x=p1$CA$u[,1],y=p1$CA$u[,2],cex=0.5,pch=16,
-     main="ACT Selected Metrics",
+t1<-plot(p1,scaling=1)
+
+p2<-predict(p1,newdata = ACTEnvData[ACTEnvData$Ref<0,-c(1)][1:(n.test/4),],type="wa",scaling=1)
+plot(p1,display="sites",scaling=1,cex=0.3,pch=16,col="black",type="n",
+     main="ACT Site Matching",
      xlab=paste0("PC1 (",signif(p1$CA$eig[1]/sum(p1$CA$eig)*100,4),"%)"),
-     ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"))
-points(x=p2[,1],y=p2[,2],pch=16,cex=0.5,col="red")
+     ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"))#,
+#ylim=c(-0.20,0.20))
+#plot(x=p1$CA$u[,1],y=p1$CA$u[,2],cex=0.5,pch=16,
+#     main="YK Number of Metrics",
+#     xlab=paste0("PC1 (",signif(p1$CA$eig[1]/sum(p1$CA$eig)*100,4),"%)"),
+#     ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"),
+#     ylim=c(-0.20,0.20))
+points(x=t1$sites[,1],y=t1$sites[,2],pch=16,cex=0.6,col="darkgrey")
+points(x=p2[,1],y=p2[,2],pch=16,cex=0.8,col="black")
 #points(p1,display="species",scaling=1)
-legend("topright",legend=c("Reference","Test"),pch=16,col=c("black","red"))
+legend("topright",legend=c("Reference","Test"),pch=c(16,16),pt.cex=c(0.6,0.8),col=c("darkgrey","black"))
+for(i in colnames(output)[21:ncol(output)]){
+  ordiellipse(ord=p2,groups=as.factor(output[output$Analysis.type=="Combined" & output$Class=="D3",i]),
+              scaling=1,display="sites",kind="sd")
+}
 #text(x=p2[,1],y=p2[,2],pos=2, cex=1.0,col="white",
 #     labels=output[output$Analysis.type=="Combined" & output$Class=="D0","n.Ref"])
 #text(x=p2[,1],y=p2[,2],pos=2, cex=0.7,
 #     labels=output[output$Analysis.type=="Combined" & output$Class=="D0","n.Ref"])
 #text(x=p2[,1],y=p2[,2],pos=2, cex=0.7,
 #     labels=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
-
-textplot(x=p2[1:(n.test/4),1],
-         y=p2[1:(n.test/4),2],
-         new=F,cex=0.6,
+library(wordcloud)
+textplot(x=p2[1:20,1],
+         y=p2[1:20,2],
+         new=F,cex=0.8,
          words=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
 
-textplot(x=p2[1:(n.test/4),1],
-         y=p2[1:(n.test/4),2],
-         new=F,cex=0.7,
-         words=output[output$Analysis.type=="Combined" & output$Class=="D3","n.Ref"])
+textplot2(x=p2[1:20,1],
+          y=p2[1:20,2]+0.05,
+          new=F,cex=0.8,
+          words=output[output$Analysis.type=="Combined" & output$Class=="D3","n.Ref"],pointcolor = "black")
+
+#Create data table with env and bio distances for all pairwise combinations
+library(cluster)
+
+p1<-rda(scale(ACTEnvData[1:(n.train+(n.test/4)),-c(1)]))
+#p2<-rda(scale(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),colSums(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),])>(ncol(bio.data.test$Raw.Data)*0.1)]))
+
+env.dist<-daisy(p1$CA$u[,1:3], metric="euclidean",weights=(p1$CA$eig/sum(p1$CA$eig))[1:3])
+#env.dist<-dist(p1$CA$u)
+#bio.dist<-dist(p2$CA$u)
+bio.dist<-vegdist(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),colSums(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),])>(ncol(bio.data.test$Raw.Data)*0.1)],method="bray")
+
+m <- data.frame(t(combn(rownames(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),]),2)), as.numeric(bio.dist),as.numeric(env.dist))
+
+smoothScatter(m$as.numeric.bio.dist,m$as.numeric.env.dist, main="ACT",xlab="Biological Distance", ylab="Habitat Distance")
+abline(lm(m$as.numeric.env.dist~m$as.numeric.bio.dist),lwd=2)
 
 ######################################################################################################
 #
@@ -554,31 +632,60 @@ for (i in sort(unique(unlist(output[,10:18])))){
 sort(colSums(output[output$Analysis.type=="Combined" & output$Class=="D0",21:ncol(output)],na.rm = T))
 
 p1<-rda(GLEnvData[GLEnvData$Ref>0,-c(1)])
-p2<-predict(p1,newdata = GLEnvData[GLEnvData$Ref<0,-c(1)],type="wa")#,scaling=3)
-#plot(p1,display="sites",scaling=1)
-plot(x=p1$CA$u[,1],y=p1$CA$u[,2],cex=0.5,pch=16,
-     main="GL Selected Metrics",
+t1<-plot(p1,scaling=1)
+
+p2<-predict(p1,newdata = GLEnvData[GLEnvData$Ref<0,-c(1)][1:(n.test/4),],type="wa",scaling=1)
+plot(p1,display="sites",scaling=1,cex=0.3,pch=16,col="black",type="n",
+     main="GL Site Matching",
      xlab=paste0("PC1 (",signif(p1$CA$eig[1]/sum(p1$CA$eig)*100,4),"%)"),
-     ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"))
-points(x=p2[,1],y=p2[,2],pch=16,cex=0.5,col="red")
+     ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"))#,
+#ylim=c(-0.20,0.20))
+#plot(x=p1$CA$u[,1],y=p1$CA$u[,2],cex=0.5,pch=16,
+#     main="YK Number of Metrics",
+#     xlab=paste0("PC1 (",signif(p1$CA$eig[1]/sum(p1$CA$eig)*100,4),"%)"),
+#     ylab=paste0("PC2 (",signif(p1$CA$eig[2]/sum(p1$CA$eig)*100,4),"%)"),
+#     ylim=c(-0.20,0.20))
+points(x=t1$sites[,1],y=t1$sites[,2],pch=16,cex=0.6,col="darkgrey")
+points(x=p2[,1],y=p2[,2],pch=16,cex=0.8,col="black")
 #points(p1,display="species",scaling=1)
-legend("topright",legend=c("Reference","Test"),pch=16,col=c("black","red"))
+legend("topright",legend=c("Reference","Test"),pch=c(16,16),pt.cex=c(0.6,0.8),col=c("darkgrey","black"))
+for(i in colnames(output)[21:ncol(output)]){
+  ordiellipse(ord=p2,groups=as.factor(output[output$Analysis.type=="Combined" & output$Class=="D3",i]),
+              scaling=1,display="sites",kind="sd")
+}
 #text(x=p2[,1],y=p2[,2],pos=2, cex=1.0,col="white",
 #     labels=output[output$Analysis.type=="Combined" & output$Class=="D0","n.Ref"])
 #text(x=p2[,1],y=p2[,2],pos=2, cex=0.7,
 #     labels=output[output$Analysis.type=="Combined" & output$Class=="D0","n.Ref"])
 #text(x=p2[,1],y=p2[,2],pos=2, cex=0.7,
 #     labels=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
-
-textplot(x=p2[1:40,1],
-         y=p2[1:40,2],
-         new=F,cex=0.7,
-         words=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
-
+library(wordcloud)
 textplot(x=p2[1:40,1],
          y=p2[1:40,2],
          new=F,cex=0.8,
-         words=output[output$Analysis.type=="Combined" & output$Class=="D3","n.Ref"])
+         words=output[output$Analysis.type=="Combined" & output$Class=="D3","met.numbs"])
+
+textplot2(x=p2[1:40,1]+0.05,
+          y=p2[1:40,2],
+          new=F,cex=0.8,
+          words=output[output$Analysis.type=="Combined" & output$Class=="D3","n.Ref"],pointcolor = "black")
+
+
+#Create data table with env and bio distances for all pairwise combinations
+library(cluster)
+
+p1<-rda(scale(GLEnvData[1:(n.train+(n.test/4)),-c(1)]))
+#p2<-rda(scale(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),colSums(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),])>(ncol(bio.data.test$Raw.Data)*0.1)]))
+
+env.dist<-daisy(p1$CA$u[,1:4], metric="euclidean",weights=(p1$CA$eig/sum(p1$CA$eig))[1:4])
+#env.dist<-dist(p1$CA$u)
+#bio.dist<-dist(p2$CA$u)
+bio.dist<-vegdist(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),colSums(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),])>(ncol(bio.data.test$Raw.Data)*0.1)],method="bray")
+
+m <- data.frame(t(combn(rownames(bio.data.test$Raw.Data[1:(n.train+(n.test/4)),]),2)), as.numeric(bio.dist),as.numeric(env.dist))
+
+smoothScatter(m$as.numeric.bio.dist,m$as.numeric.env.dist, main="YT",xlab="Biological Distance", ylab="Habitat Distance")
+abline(lm(m$as.numeric.env.dist~m$as.numeric.bio.dist),lwd=2)
 
 ##########################################################################################
 #
@@ -586,12 +693,17 @@ textplot(x=p2[1:40,1],
 ##########################################################################################
 
 test<-data.frame(matrix(nrow=441,ncol=2))
-test[,1]<-rep(c(-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1),times=21)
-test[,2]<-rep(c(-1,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1),each=21)
+test[,1]<-rep(seq(from=-1,to=1,by=0.1),times= 21)
+test[,2]<-rep(seq(from=-1,to=1,by=0.1),each= 21)
 
-distance=unique(sort(sqrt(0.7*(0-test[,1])^2 + 0.3*(0-test[,2])^2)))
-dist.dif<-sort(unique(diff(distance)[-c(1:3)]))
-plot(1:30,dist.dif[1:30])
-points(1:30,(1*(1/((3:32)^(2)))))
+distance=unique(signif(sort(sqrt(0.7*(0-test[,1])^2 + 0.3*(0-test[,2])^2)),3))
+
+cummean.dist.dif<-cumsum(distance) / seq_along(distance)
+
+dist.dif<-unique(diff(distance))
+plot(1:30,cum.dist.dif[1:30], main="Distance Decay", xlab="Ranked Distance",ylab="Iterated Weighted Euchlidean Distance",type="p")
+scatter.smooth(1:30,dist.dif[1:30])
+lines(predict(loess(I(1*(1/((3:32)^(2))))~I(1:30))))
+points(3:32,(1*(2/((3:32)^(0.5)))))
 points(1:30,exp(-(1:30)))
 #distance<-dist(test, method = "euclidean")
