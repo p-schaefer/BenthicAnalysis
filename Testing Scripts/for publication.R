@@ -2,6 +2,25 @@ write.excel <- function(x,row.names=FALSE,col.names=TRUE,...) {
   write.table(x,"clipboard",sep="\t",row.names=row.names,col.names=col.names,...)
 }
 
+derivative <- function(f, x, ..., order = 1, delta = 0.1, sig = 6) {
+  # Numerically computes the specified order derivative of f at x
+  vals <- matrix(NA, nrow = order + 1, ncol = order + 1)
+  grid <- seq(x - delta/2, x + delta/2, length.out = order + 1)
+  vals[1, ] <- sapply(grid, f, ...) - f(x, ...)
+  for (i in 2:(order + 1)) {
+    for (j in 1:(order - i + 2)) {
+      stepsize <- grid[i + j - 1] - grid[i + j - 2]
+      vals[i, j] <- (vals[i - 1, j + 1] - vals[i - 1, j])/stepsize
+    }
+  }
+  return(signif(vals[order + 1, 1], sig))
+}
+
+g<-function(x,z=1,b=2){
+  return(z/(x^b))
+}
+
+
 textplot2 <- function(x, 
                       y, 
                       words, 
@@ -68,6 +87,68 @@ output$Site<-rownames(bio.data)[(n.train+1):(nrow(YKBioData)-2)]
 output$Class<-c(rep("D0",n.test/4),rep("D1",n.test/4),rep("D2",n.test/4),rep("D3",n.test/4))
 output<-rbind(output,output,output,output)
 output$Analysis.type<-c(rep("Original",n.test),rep("Ad.Met.Sel",n.test),rep("Ad.Site.Sel",n.test),rep("Combined",n.test))
+
+nn.sites<-BenthicAnalysistesting::site.matchUI(Test=YKEnvData[119:nrow(YKEnvData),-c(1)],
+                                     Reference=YKEnvData[1:118,-c(1)])
+
+library(ggplot2)
+for(i in 1:length(119:nrow(YKEnvData))){
+  site<-nn.sites$distance.matrix[i,][order(nn.sites$distance.matrix[i,])]#[-c(1:2)]
+  g<-function(x,z=1,b=2){
+    return((z/(x^b)))
+  }
+  d1<-data.frame(x=site,y=log(g(site)))
+  d2<-seq(from=min(site),to=max(site),length.out = length(site))
+  der2<-sapply(site,derivative,f=g,order=1,delta=0.01)
+  cusu<-cumsum(abs(der2))/sum(abs(der2))
+  
+  
+  #d1<-data.frame(n=1:length(site),Dist=site,H0=1/(1:length(site)))[-c(1),]
+  #d2<-data.frame(apply(d1[,2:3],2,diff))
+  #d2$n<-1:nrow(d2)+1
+  #plot(d2$n,d2$Dist,main=i)
+  #points(d2$n,d2$H0,col="red")
+  
+  thresh1<-max(max(log(g(d2))))-(max(log(g(d2)))-min(log(g(d2))))*2/3
+  thresh.x<-sqrt(1/exp(thresh1))
+  
+  #thresh.d2<-site[max(which(cusu<=0.95))]
+  final<-site[(which(site<=thresh.x))]
+  print(length(final))
+  #if(length(site[site<thresh.d2])<10){
+  #  stop()
+  #}
+  #if(length(site[site<thresh.d2])>50){
+  #  stop()
+  #}
+  
+  #plot(d1,main=i)
+  #plot(d2,log(g(d2)),main=i)
+  #plot(d2,sapply(log(g(d2)),derivative,f=g,order=1,delta=0.01),main=i)
+  
+  hull<-nn.sites$ordination.scores[nn.sites$ordination.scores$Class=="Reference",]
+  hull$Ref<-F
+  hull$Ref[rownames(hull)%in%names(final)]<-T
+  hull<-hull[hull$Ref==T,]
+  hull<-hull[chull(hull[,c("PC1","PC2")]),]
+  
+  test.site<-nn.sites$ordination.scores[rownames(nn.sites$ordination.scores)%in%rownames(nn.sites$distance.matrix)[i],]
+  
+  reference.sites<-nn.sites$ordination.scores[nn.sites$ordination.scores$Class=="Reference",]
+  reference.sites$Ref<-F
+  reference.sites$Ref[rownames(reference.sites)%in%names(final)]<-T
+  reference.sites<-reference.sites[reference.sites$Ref==T,]
+  
+  p1 <- ggplot(data=nn.sites$ordination.scores,aes(x=PC1, y=PC2)) + 
+    geom_vline(xintercept = 0, color="darkgrey") + geom_hline(yintercept = 0, color="darkgrey") +
+    geom_point(aes(color=Class))  + theme_bw() + labs(title=paste0("Nearest-neighbour Ordination of site ",i))
+    
+  p1<- p1 + geom_polygon(data=hull[,c("PC1","PC2")],alpha=0.5)
+  p1<- p1 + geom_text(data=reference.sites[,c("PC1","PC2")], label=rownames(reference.sites))
+  p1<- p1 + geom_point(data=test.site[,c("PC1","PC2")],size=3)
+  print(p1)
+
+}
 
 #What if you include D0 in the training set?
 #output<-data.frame(matrix(nrow=120,ncol=9))
